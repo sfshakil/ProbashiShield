@@ -1,0 +1,122 @@
+﻿body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+@keyframes gradient-animation-cust {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@media (max-width: 999.99px) {
+    body,
+    html {
+        background: linear-gradient(to right, #ffff8955, #ffff78aa, #2fe6ff6c, #2fccffa5);
+        background-size: 300% 300%;
+        animation: gradient-animation-cust 15s ease infinite;
+    }
+
+    .user_card {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (min-width: 1000px) {
+    body,
+    html {
+        background-image: url("/images/bbl_bg.jpg");
+    }
+
+    .user_card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+.user_card {
+    height: 270px;
+    width: 450px;
+    margin-top: auto;
+    margin-bottom: auto;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    padding: 10px;
+}
+
+
+.brand_logo {
+    height: 100px;
+    width: 100px;
+    border-radius: 20%;
+    border: 2px solid white;
+}
+
+.login_btn {
+    width: 100%;
+    background: #0072bc !important;
+    color: white !important;
+}
+
+.login_btn:focus {
+    box-shadow: none !important;
+    outline: 0px !important;
+}
+
+.input-group-text {
+    background: #0072bc !important;
+    color: white !important;
+    border: 0 !important;
+    border-radius: 0.25rem 0 0 0.25rem !important;
+}
+
+.input_user,
+.input_pass:focus {
+    box-shadow: none !important;
+    outline: 0px !important;
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #0072bc !important;
+}
+
+.custom-checkbox {
+    padding-bottom: 5px;
+}
+
+.validation-summary-errors,
+.field-validation-error {
+    color: red;
+}
+
+.validation-summary-errors ul {
+    padding: 0;
+}
+
+li {
+    list-style-position: inside;
+    list-style-type: '● ';
+}
+
+.btn.btn-sm-cust {
+    --bs-btn-padding-y: .25rem;
+    --bs-btn-padding-x: .5rem;
+    --bs-btn-font-size: .75rem;
+}

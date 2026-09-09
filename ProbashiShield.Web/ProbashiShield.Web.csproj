@@ -1,0 +1,77 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+	<CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Logs\**" />
+    <Compile Remove="wwwroot\lib\vertical-timeline-master\**" />
+    <Content Remove="Logs\**" />
+    <Content Remove="wwwroot\lib\vertical-timeline-master\**" />
+    <EmbeddedResource Remove="Logs\**" />
+    <EmbeddedResource Remove="wwwroot\lib\vertical-timeline-master\**" />
+    <None Remove="Logs\**" />
+    <None Remove="wwwroot\lib\vertical-timeline-master\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+    <PackageReference Include="FontAwesome" Version="4.7.0" />
+    <PackageReference Include="LigerShark.WebOptimizer.Core" Version="3.0.477" />
+    <PackageReference Include="Magicodes.IE.AspNetCore" Version="2.7.5.2" />
+    <PackageReference Include="Magicodes.IE.Excel.AspNetCore" Version="2.7.5.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+    <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders" Version="0.24.0" />
+    <PackageReference Include="NetEscapades.AspNetCore.SecurityHeaders.TagHelpers" Version="0.24.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="8.1.1" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProbashiShield.DAL\ProbashiShield.DAL.csproj" />
+    <ProjectReference Include="..\ProbashiShield.Database\ProbashiShield.Database.csproj" />
+    <ProjectReference Include="..\ProbashiShield.Domain\ProbashiShield.Domain.csproj" />
+    <ProjectReference Include="..\ProbashiShield.Shared\ProbashiShield.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Views\_ViewImports.cshtml">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\css\CustomStyles\FancyTreeCustom.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="StaticResources\Templates\SIInstructionTemplate.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="StaticResources\Templates\" />
+    <Folder Include="StaticResources\UploaderTemplates\" />
+    <Folder Include="Views\Shared\Components\DynamicContent\" />
+    <Folder Include="Views\Shared\Components\DynamicSideMenu\" />
+  </ItemGroup>
+
+</Project>

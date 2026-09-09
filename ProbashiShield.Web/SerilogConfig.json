@@ -1,0 +1,79 @@
+{
+  "SerilogOp1": {
+    "Using": [],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Error",
+        "System": "Error",
+        "Microsoft.EntityFrameworkCore": "Error"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "D://ApplicationLogs//InfoSightWEBLog//log-.log",
+          "rollingInterval": "Day",
+          "outputTemplate": "{Timestamp}{NewLine:1}{Level}: {Message}{NewLine:1}{Exception:1}{NewLine:1}",
+          "rollOnFileSizeLimit": true,
+          "fileSizeLimitBytes": 2000000, // 2MB
+          "shared": true
+        }
+      },
+      {
+        "Name": "MSSqlServer",
+        "Args": {
+          "connectionString": "server=172.25.4.115,1450;database=CRM;User Id=crm_xcrv; Password=dhaka@123; MultipleActiveResultSets=true; TrustServerCertificate=True;",
+          "tableName": "PPC_ApplicationLogs",
+          "schemaName": "dbo",
+          "autoCreateSqlTable": true
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithProcessId",
+      "WithThreadId"
+    ],
+    "Properties": {
+      "ApplicationName": "RiskScoringAdmin.Web"
+    }
+  },
+
+  "SerilogOp2": {
+    "Using": [],
+    "MinimumLevel": {
+      "Default": "Warning",
+      "Override": {
+        "Microsoft": "Error",
+        "System": "Error",
+        "Microsoft.EntityFrameworkCore": "Error"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "D://ApplicationLogs//InfoSightWEBLog//log-.log",
+          "rollingInterval": "Day",
+          "outputTemplate": "{Timestamp}{NewLine:1}{Level}: {Message}{NewLine:1}{Exception:1}{NewLine:1}",
+          "rollOnFileSizeLimit": true,
+          "fileSizeLimitBytes": 2000000, // 2MB
+          "shared": true
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithMachineName",
+      "WithProcessId",
+      "WithThreadId"
+    ],
+    "Properties": {
+      "ApplicationName": "RiskScoringAdmin.Web"
+    }
+  }
+
+}

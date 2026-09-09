@@ -1,0 +1,55 @@
+@model ProbashiShield.Domain.ViewModels.Admin.AgencyDataSetViewModel
+
+<form id="agencyDataSetForm">
+    <input type="hidden" id="Id" name="Id" value="@(Model?.Id ?? 0)" />
+
+    <div class="mb-3">
+        <label for="LicenseNumber" class="form-label">License Number *</label>
+        <input type="text" class="form-control" id="LicenseNumber" name="LicenseNumber" value="@Model?.LicenseNumber" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="AgencyName" class="form-label">Agency Name *</label>
+        <input type="text" class="form-control" id="AgencyName" name="AgencyName" value="@Model?.AgencyName" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="Address" class="form-label">Address</label>
+        <textarea class="form-control" id="Address" name="Address" rows="2">@Model?.Address</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="Phone" class="form-label">Phone</label>
+        <input type="tel" class="form-control" id="Phone" name="Phone" value="@Model?.Phone" />
+    </div>
+
+    <div class="mb-3">
+        <label for="Email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="Email" name="Email" value="@Model?.Email" />
+    </div>
+
+    <div class="mb-3">
+        <label for="AgencyStatus" class="form-label">Status</label>
+        <select class="form-control" id="AgencyStatus" name="AgencyStatus">
+            <option value="">-- Select Status --</option>
+            <option value="Active" @(Model?.AgencyStatus == "Active" ? "selected" : "")>Active</option>
+            <option value="Inactive" @(Model?.AgencyStatus == "Inactive" ? "selected" : "")>Inactive</option>
+            <option value="Suspended" @(Model?.AgencyStatus == "Suspended" ? "selected" : "")>Suspended</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="ValidityDate" class="form-label">Validity Date</label>
+        <input type="date" class="form-control" id="ValidityDate" name="ValidityDate" value="@Model?.ValidityDate?.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="mb-3">
+        <label for="LastSyncDate" class="form-label">Last Sync Date</label>
+        <input type="datetime-local" class="form-control" id="LastSyncDate" name="LastSyncDate" value="@Model?.LastSyncDate?.ToString("yyyy-MM-ddTHH:mm")" />
+    </div>
+</form>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    <button type="button" class="btn btn-primary" onclick="SaveAgencyDataSet()">Save Changes</button>
+</div>

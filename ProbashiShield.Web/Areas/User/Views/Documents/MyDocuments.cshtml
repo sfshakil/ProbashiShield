@@ -1,0 +1,530 @@
+@model IEnumerable<ProbashiShield.Database.DBEntities.VerificationRequest>
+
+@{
+    ViewData["Title"] = "My Verification Requests";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 0;
+}
+
+<style>
+    .header-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 15px;
+        color: white;
+        margin-bottom: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+        .header-bar h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+    .btn-create {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            color: #764ba2;
+        }
+
+    .verification-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+    }
+
+        .verification-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+    .card-header-status {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 22px 25px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .card-header-status h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+    .status-badge {
+        background: rgba(255,255,255,0.3);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 22px 25px;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+    }
+
+    .info-label {
+        color: #666;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .info-value {
+        color: #333;
+        font-size: 1rem;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .card-footer-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .btn-view-details {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 26px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+        .btn-view-details:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.3);
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .pagination-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 30px;
+    }
+
+        .pagination-bar a, .pagination-bar span {
+            min-width: 40px;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            color: #667eea;
+            border: 1px solid #e0e0e0;
+        }
+
+            .pagination-bar a:hover {
+                background: #f5f7fa;
+            }
+
+        .pagination-bar .active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pagination-bar .disabled {
+            color: #ccc;
+            pointer-events: none;
+        }
+
+    /* Modal */
+    .detail-tabs {
+        display: flex;
+        gap: 6px;
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 20px;
+    }
+
+    .detail-tab-btn {
+        background: none;
+        border: none;
+        padding: 10px 18px;
+        font-weight: 600;
+        color: #888;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+    }
+
+        .detail-tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+    .detail-pane {
+        display: none;
+    }
+
+        .detail-pane.active {
+            display: block;
+        }
+
+    .doc-grid-modal {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+
+    .doc-card-modal {
+        background: #f5f7fa;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        border: 2px solid #e0e0e0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .doc-card-modal:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .doc-card-modal i {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .doc-card-modal .doc-type {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .doc-card-modal .doc-name {
+            font-size: 0.75rem;
+            color: #888;
+            word-break: break-word;
+        }
+
+    .kv-table {
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+        .kv-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+            .kv-table td:first-child {
+                color: #666;
+                font-weight: 600;
+                width: 45%;
+            }
+
+    .verdict-badge {
+        display: inline-block;
+        padding: 5px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+        .verdict-badge.verified {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .verdict-badge.caution {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .verdict-badge.highrisk {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+    .reason-list {
+        padding-left: 18px;
+        margin-bottom: 15px;
+    }
+
+    .empty-msg {
+        text-align: center;
+        color: #999;
+        padding: 30px;
+    }
+</style>
+
+<div class="container-lg">
+    <div class="header-bar">
+        <h1><i class="fas fa-file-check me-2"></i>My Verification Requests</h1>
+        <a href="@Url.Action("Upload", "Documents", new { area = "User" })" class="btn-create">
+            <i class="fas fa-plus"></i>Upload New Documents
+        </a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var verification in Model)
+        {
+            <div class="verification-card">
+                <div class="card-header-status">
+                    <h3>Request #@verification.RequestId.ToString().Substring(0, 8).ToUpper()</h3>
+                    <div class="status-badge"><i class="fas fa-clock me-1"></i>@verification.RequestedAt.ToString("MMM dd, yyyy hh:mm tt")</div>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-phone me-1"></i>Mobile Number</div>
+                            <div class="info-value">@(string.IsNullOrEmpty(verification.MobileNumber) ? "Not provided" : verification.MobileNumber)</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-calendar me-1"></i>Request Date</div>
+                            <div class="info-value">@verification.RequestedAt.ToString("MMM dd, yyyy")</div>
+                        </div>
+                    </div>
+                    <div class="card-footer-actions">
+                        <button type="button" class="btn btn-view-details" onclick="OpenDetails(@verification.Id, '@verification.RequestId.ToString().Substring(0, 8).ToUpper()')">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination-bar">
+                <a class="@(currentPage <= 1 ? "disabled" : "")" href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = currentPage - 1 })"><i class="fas fa-chevron-left"></i></a>
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    if (p == currentPage)
+                    {
+                        <span class="active">@p</span>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = p })">@p</a>
+                    }
+                }
+                <a class="@(currentPage >= totalPages ? "disabled" : "")" href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = currentPage + 1 })"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="verification-card">
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                <h3>No Verification Requests Yet</h3>
+                <p>You haven't submitted any documents for verification yet.</p>
+                <a href="@Url.Action("Upload", "Documents", new { area = "User" })" class="btn btn-primary btn-lg">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your First Document
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="modalRequestTitle">Request Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-tabs">
+                    <button class="detail-tab-btn active" data-tab="docs" onclick="SwitchTab('docs')">Documents</button>
+                    <button class="detail-tab-btn" data-tab="ocr" onclick="SwitchTab('ocr')">OCR Result</button>
+                    <button class="detail-tab-btn" data-tab="verdict" onclick="SwitchTab('verdict')">AI &amp; Verdict</button>
+                </div>
+
+                <div id="pane-docs" class="detail-pane active">
+                    <div id="docsContent" class="doc-grid-modal"></div>
+                </div>
+
+                <div id="pane-ocr" class="detail-pane">
+                    <div id="ocrContent"></div>
+                </div>
+
+                <div id="pane-verdict" class="detail-pane">
+                    <div id="verdictContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="filePreviewName"></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" id="filePreviewBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function SwitchTab(tab) {
+            document.querySelectorAll('.detail-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.detail-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + tab));
+        }
+
+        function OpenDetails(id, shortId) {
+            document.getElementById('modalRequestTitle').textContent = 'Request #' + shortId;
+            document.getElementById('docsContent').innerHTML = '<div class="empty-msg"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            document.getElementById('ocrContent').innerHTML = '';
+            document.getElementById('verdictContent').innerHTML = '';
+            SwitchTab('docs');
+
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+
+            fetch('@Url.Action("GetVerificationDetails", "Documents", new { area = "User" })?id=' + id)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        document.getElementById('docsContent').innerHTML = '<div class="empty-msg">' + data.message + '</div>';
+                        return;
+                    }
+                    RenderDocuments(data.documents);
+                    RenderOcr(data.ocrResult);
+                    RenderVerdict(data.verdictJson, data.aiLog);
+                })
+                .catch(err => {
+                    document.getElementById('docsContent').innerHTML = '<div class="empty-msg">Error loading details</div>';
+                });
+        }
+
+        function RenderDocuments(docs) {
+            const el = document.getElementById('docsContent');
+            if (!docs || docs.length === 0) { el.innerHTML = '<div class="empty-msg">No documents uploaded</div>'; return; }
+            el.innerHTML = '';
+            docs.forEach(doc => {
+                const isPdf = (doc.originalFileName || '').toLowerCase().endsWith('.pdf');
+                const card = document.createElement('div');
+                card.className = 'doc-card-modal';
+                card.innerHTML = '<i class="fas ' + (isPdf ? 'fa-file-pdf text-danger' : 'fa-image text-success') + '"></i>' +
+                    '<div class="doc-type">' + doc.documentType + '</div>' +
+                    '<div class="doc-name">' + doc.originalFileName + '</div>';
+                card.onclick = () => PreviewFile(doc.originalFileName, doc.filePath, isPdf);
+                el.appendChild(card);
+            });
+        }
+
+        function PreviewFile(name, filePath, isPdf) {
+            document.getElementById('filePreviewName').textContent = name;
+            const body = document.getElementById('filePreviewBody');
+            body.innerHTML = isPdf
+                ? '<embed src="' + filePath + '" type="application/pdf" width="100%" height="500px" />'
+                : '<img src="' + filePath + '" style="max-width:100%; max-height:500px; border-radius:8px;" />';
+            new bootstrap.Modal(document.getElementById('filePreviewModal')).show();
+        }
+
+        function RenderOcr(ocr) {
+            const el = document.getElementById('ocrContent');
+            if (!ocr) { el.innerHTML = '<div class="empty-msg">OCR not run yet</div>'; return; }
+            el.innerHTML = '<table class="kv-table">' +
+                Row('Agency Name', ocr.agencyName) +
+                Row('License Number', ocr.licenseNumber) +
+                Row('Destination Country', ocr.destinationCountry) +
+                Row('Job Title', ocr.jobTitle) +
+                Row('Salary', (ocr.salary ?? '-') + ' ' + (ocr.salaryCurrency || '')) +
+                Row('Recruitment Fee', (ocr.recruitmentFee ?? '-') + ' ' + (ocr.recruitmentFeeCurrency || '')) +
+                Row('OCR Confidence', ocr.ocrConfidence != null ? (ocr.ocrConfidence + '%') : '-') +
+                Row('Processed At', ocr.processedAt ? new Date(ocr.processedAt).toLocaleString() : '-') +
+                '</table>';
+        }
+
+        function Row(label, value) {
+            return '<tr><td>' + label + '</td><td>' + (value ?? '-') + '</td></tr>';
+        }
+
+        function RenderVerdict(verdictJson, aiLog) {
+            const el = document.getElementById('verdictContent');
+            if (!verdictJson) { el.innerHTML = '<div class="empty-msg">Validation not run yet</div>'; return; }
+
+            let verdict;
+            try { verdict = JSON.parse(verdictJson); } catch { el.innerHTML = '<div class="empty-msg">Unable to read verdict</div>'; return; }
+
+            const v = (verdict.verdict || verdict.Verdict || '').toString();
+            const badgeClass = v.toLowerCase().includes('verified') ? 'verified' : v.toLowerCase().includes('caution') ? 'caution' : 'highrisk';
+            const reasons = verdict.reasonsBangla || verdict.ReasonsBangla || [];
+            const suggestion = verdict.suggestedAction || verdict.SuggestedAction || '-';
+            const bngRec = verdict.bngRecommendation || verdict.BngRecommendation || '';
+
+            let html = '<span class="verdict-badge ' + badgeClass + '">' + v + '</span>';
+            if (aiLog) html += '<p style="color:#888; font-size:0.85rem; margin-top:-8px;">Risk score: ' + aiLog.riskLevel + '</p>';
+            html += '<h6>কারণসমূহ (Reasons)</h6>';
+            html += reasons.length ? '<ul class="reason-list">' + reasons.map(r => '<li>' + r + '</li>').join('') + '</ul>' : '<p class="empty-msg">-</p>';
+            html += '<h6>Suggested Action</h6><p>' + suggestion + '</p>';
+            if (bngRec) html += '<h6>AI Recommendation (বাংলা)</h6><p>' + bngRec + '</p>';
+
+            el.innerHTML = html;
+        }
+    </script>
+}

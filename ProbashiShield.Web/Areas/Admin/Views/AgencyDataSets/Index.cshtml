@@ -1,0 +1,210 @@
+@{
+    ViewData["Title"] = "Agency Data Sets";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h2>Agency Data Sets</h2>
+            <hr />
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by License Number, Agency Name, or Email...">
+        </div>
+        <div class="col-md-6">
+            <button class="btn btn-primary" id="btnSearch">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Agency Data Sets List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="agencyDataSetsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>License Number</th>
+                                    <th>Agency Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Validity Date</th>
+                                    @* <th>Actions</th> *@
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Create/Edit -->
+<div class="modal fade" id="agencyDataSetModal" tabindex="-1" role="dialog" aria-labelledby="agencyDataSetModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agencyDataSetModalLabel">Add Agency Data Set</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Form will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/bootstrap-datatables/js/datatables.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript">
+        var dataTable;
+
+        $(document).ready(function () {
+            InitializeDataTable();
+
+            // Search button click event
+            $('#btnSearch').click(function () {
+                dataTable.ajax.reload();
+            });
+
+            // Enter key in search input
+            $('#searchInput').keypress(function (e) {
+                if (e.which == 13) { // Enter key
+                    dataTable.ajax.reload();
+                    return false;
+                }
+            });
+        });
+
+        function InitializeDataTable() {
+            dataTable = $('#agencyDataSetsTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "@Url.Action("GetAllAgencyDataSets", "AgencyDataSets", new { area = "Admin" })",
+                    "type": "POST",
+                    "datatype": "json",
+                    "data": function (d) {
+                        d.iDisplayStart = d.start;
+                        d.iDisplayLength = d.length;
+                        d.sSearch = $('#searchInput').val();
+                    }
+                },
+                // "columnDefs": [
+                //     {
+                //         "targets": 6,
+                //         "render": function (data, type, row) {
+                //             return `<button class="btn btn-sm btn-info" onclick="EditAgencyDataSet(${row.id})"><i class="fas fa-edit"></i> Edit</button>
+                //                     <button class="btn btn-sm btn-danger" onclick="DeleteAgencyDataSet(${row.id})"><i class="fas fa-trash"></i> Delete</button>`;
+                //         }
+                //     }
+                // ],
+                "columns": [
+                    { "data": "licenseNumber" },
+                    { "data": "agencyName" },
+                    { "data": "email" },
+                    { "data": "phone" },
+                    { "data": "agencyStatus" },
+                    { "data": "validityDate", "render": function (data) { return data ? new Date(data).toLocaleDateString() : ''; } }
+                ]
+            });
+        }
+
+        function OpenCreateModal() {
+            $.ajax({
+                url: "@Url.Action("Create", "AgencyDataSets", new { area = "Admin" })",
+                type: "GET",
+                success: function (data) {
+                    $('#modalBody').html(data);
+                    $('#agencyDataSetModal').modal('show');
+                },
+                error: function () {
+                    alert('Error loading form');
+                }
+            });
+        }
+
+        function EditAgencyDataSet(id) {
+            $.ajax({
+                url: "@Url.Action("Edit", "AgencyDataSets", new { area = "Admin" })?id=" + id,
+                type: "GET",
+                success: function (data) {
+                    $('#modalBody').html(data);
+                    $('#agencyDataSetModal').modal('show');
+                },
+                error: function () {
+                    alert('Error loading form');
+                }
+            });
+        }
+
+        function SaveAgencyDataSet() {
+            var formData = {
+                id: $('#Id').val(),
+                licenseNumber: $('#LicenseNumber').val(),
+                agencyName: $('#AgencyName').val(),
+                address: $('#Address').val(),
+                phone: $('#Phone').val(),
+                email: $('#Email').val(),
+                agencyStatus: $('#AgencyStatus').val(),
+                validityDate: $('#ValidityDate').val(),
+                lastSyncDate: $('#LastSyncDate').val()
+            };
+
+            $.ajax({
+                url: "@Url.Action("SaveAgencyDataSet", "AgencyDataSets", new { area = "Admin" })",
+                type: "POST",
+                data: JSON.stringify(formData),
+                contentType: "application/json",
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        $('#agencyDataSetModal').modal('hide');
+                        dataTable.ajax.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Error saving agency data set');
+                }
+            });
+        }
+
+        function DeleteAgencyDataSet(id) {
+            if (confirm('Are you sure you want to delete this agency data set?')) {
+                $.ajax({
+                    url: "@Url.Action("DeleteAgencyDataSet", "AgencyDataSets", new { area = "Admin" })",
+                    type: "POST",
+                    data: { id: id },
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            dataTable.ajax.reload();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error deleting agency data set');
+                    }
+                });
+            }
+        }
+    </script>
+}

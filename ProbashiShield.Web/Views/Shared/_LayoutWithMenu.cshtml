@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="~/images/bbl-logo-mini.png">
+    <title>@ViewBag.Title</title>
+
+    <link href="/lib/bootstrap5.3/css/bootstrap.css" rel="stylesheet" />
+    <link href="/lib/fontawesome6.7.2/css/fontawesome.all.min.css" rel="stylesheet" />
+    <link href="/lib/select2/select2.min.css" rel="stylesheet" />
+    <link href="/lib/datatables-button/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    <style type="text/css">
+        .master-custom-style {
+            position: absolute;
+            width: 50%;
+            z-index: 1;
+        }
+
+        .modal-header.border-0 {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+    <script src="/lib/bootstrap5.3/js/bootstrap.bundle.js"></script>
+    <script src="/lib/select2/select2.min.js"></script>
+    <script src="/lib/datatables-button/js/dataTables.min.js"></script>
+
+    <div class="wrapper">
+        @await Component.InvokeAsync("DynamicSideMenu")
+
+        <div id="content">
+            @await Component.InvokeAsync("DynamicContent", "DynamicTopMenu")
+            <div id="contentbody">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <div id="MasterAlert" class="row text-center justify-content-center master-custom-style"></div>
+    <div id="MasterModal"></div>
+</body>
+</html>

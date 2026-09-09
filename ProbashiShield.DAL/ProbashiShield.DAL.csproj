@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
+    <PackageReference Include="MySqlConnector" Version="2.3.5" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="8.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProbashiShield.Database\ProbashiShield.Database.csproj" />
+    <ProjectReference Include="..\ProbashiShield.Shared\ProbashiShield.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="QueryExecutor\Concretes\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,721 @@
+@{
+    ViewData["Title"] = "Upload Documents";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<style>
+    .upload-container {
+        min-height: calc(100vh - 200px);
+    }
+
+    .upload-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 50px 30px;
+        text-align: center;
+        color: white;
+    }
+
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+    .form-section {
+        padding: 50px;
+    }
+
+    .upload-area {
+        border: 3px dashed #667eea;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(102,126,234,0.05);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.1);
+        }
+
+        .upload-area.dragover {
+            background: rgba(102,126,234,0.1);
+            border-color: #764ba2;
+        }
+
+    .upload-icon {
+        font-size: 4rem;
+        color: #667eea;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+    .file-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f9f9f9;
+    }
+
+        .file-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+    .file-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+
+    .button-section {
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 40px;
+    }
+
+    .btn-upload {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 35px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+        .btn-upload:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102,126,234,0.3);
+            color: white;
+        }
+
+        .btn-upload:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .alert-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 90%;
+        max-width: 500px;
+        padding: 20px 30px;
+        border-radius: 12px;
+        display: none;
+        animation: slideInRight 0.4s ease;
+        font-size: 1.1rem;
+        z-index: 9999;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        font-weight: 500;
+    }
+
+        .alert-notification.show {
+            display: flex;
+            align-items: center;
+        }
+
+    @@keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(400px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 5px solid #28a745;
+        color: #155724;
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border-left: 5px solid #dc3545;
+        color: #721c24;
+    }
+
+    .alert-icon {
+        font-size: 1.8rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .form-select-lg {
+        padding: 12px 15px;
+        font-size: 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+        .form-select-lg:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+        }
+
+    .form-label {
+        margin-bottom: 12px;
+        font-size: 1.05rem;
+        color: #333;
+    }
+
+    .spinner-pulse {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    /* Loader panel */
+    .loader-panel {
+        padding: 60px 50px;
+        text-align: center;
+        display: none;
+    }
+
+        .loader-panel h4 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .loader-panel .stage-sub {
+            color: #6c757d;
+            margin-bottom: 35px;
+        }
+
+    .progress-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        max-width: 460px;
+        margin: 0 auto 45px;
+    }
+
+    .progress-track {
+        flex: 1;
+        height: 10px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-percent {
+        font-weight: 700;
+        color: #667eea;
+        min-width: 42px;
+        text-align: right;
+    }
+
+    .stages-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 520px;
+        margin: 0 auto 35px;
+    }
+
+    .stage-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 110px;
+    }
+
+    .stage-circle {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        background: #f0f1f5;
+        color: #adb5bd;
+        border: 3px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+    .stage-item span {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .stage-item.active .stage-circle {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #764ba2;
+        animation: scalePulse 1.3s ease-in-out infinite;
+    }
+
+    .stage-item.active span {
+        color: #764ba2;
+    }
+
+    .stage-item.done .stage-circle {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+        animation: none;
+    }
+
+    .stage-item.done span {
+        color: #28a745;
+    }
+
+    @@keyframes scalePulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.08);
+        }
+    }
+
+    .stage-line {
+        flex: 1;
+        max-width: 70px;
+        height: 3px;
+        background: #e0e0e0;
+        margin: 0 -4px 30px;
+        transition: background 0.4s ease;
+    }
+
+        .stage-line.done {
+            background: linear-gradient(90deg, #667eea, #28a745);
+        }
+
+    .loader-status-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #f5f7fa;
+        padding: 12px 24px;
+        border-radius: 10px;
+        color: #495057;
+        font-size: 0.95rem;
+    }
+
+    .result-box {
+        display: none;
+        text-align: left;
+        max-width: 560px;
+        margin: 35px auto 0;
+        background: #f9f9fb;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 25px 30px;
+    }
+
+        .result-box h5 {
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .result-box .rb-row {
+            margin-bottom: 12px;
+        }
+
+        .result-box .rb-label {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .result-box .rb-verdict {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+    .rb-verdict.verified {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .rb-verdict.caution {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .rb-verdict.high-risk {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+<div class="upload-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-12 col-xl-12">
+            <div class="upload-card">
+                <div class="header-section">
+                    <h1><i class="fas fa-cloud-upload-alt"></i> Document Upload</h1>
+                    <p>Submit your documents securely for verification</p>
+                </div>
+
+                <div id="uploadFormSection">
+                    <div class="form-section">
+                        <form id="documentUploadForm">
+                            <div class="mb-5">
+                                <label class="form-label"><i class="fas fa-list text-primary me-2"></i>Document Type</label>
+                                <select class="form-select form-select-lg" id="documentType" required>
+                                    <option value="" disabled selected>Select Document Type...</option>
+                                    <option value="BMETLicense">BMET License Card</option>
+                                    <option value="Offer">Job Offer</option>
+                                    <option value="Visa">Visa</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="form-label"><i class="fas fa-file text-primary me-2"></i>Upload Files</label>
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <h5 class="text-dark font-weight-bold">Drag and drop your files here</h5>
+                                    <p class="text-muted">or click to browse your computer</p>
+                                    <small class="text-muted">JPG, PNG, PDF • Max 5MB per file</small>
+                                    <input type="file" id="fileInput" class="d-none" multiple accept=".jpg,.jpeg,.png,.pdf">
+                                </div>
+                            </div>
+
+                            <div id="filesContainer" class="mb-5" style="display: none;">
+                                <h5 class="mb-3">Selected Files (<span id="fileCount">0</span>)</h5>
+                                <div id="filesList" class="row g-4"></div>
+                            </div>
+
+                            <div class="button-section">
+                                <button type="button" class="btn btn-secondary btn-lg" onclick="ResetForm()">
+                                    <i class="fas fa-redo me-2"></i>Clear All
+                                </button>
+                                <button type="button" class="btn btn-upload btn-lg" id="uploadBtn" disabled>
+                                    <i class="fas fa-upload me-2"></i>Upload Documents
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Loader Panel -->
+                <div class="loader-panel" id="loaderPanel">
+                    <h4 id="loaderStageTitle">Uploading documents</h4>
+                    <p class="stage-sub" id="loaderStageSub">Sending your files securely...</p>
+
+                    <div class="progress-wrap">
+                        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+                        <span class="progress-percent" id="progressPercent">0%</span>
+                    </div>
+
+                    <div class="stages-row">
+                        <div class="stage-item" id="stage1">
+                            <div class="stage-circle"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <span>Upload</span>
+                        </div>
+                        <div class="stage-line" id="line1"></div>
+                        <div class="stage-item" id="stage2">
+                            <div class="stage-circle"><i class="fas fa-search"></i></div>
+                            <span>OCR Extract</span>
+                        </div>
+                        <div class="stage-line" id="line2"></div>
+                        <div class="stage-item" id="stage3">
+                            <div class="stage-circle"><i class="fas fa-shield-alt"></i></div>
+                            <span>AI Validate</span>
+                        </div>
+                    </div>
+
+                    <div class="loader-status-row" id="loaderStatusRow">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span id="loaderStatusText">Uploading files...</span>
+                    </div>
+
+                    <div class="result-box" id="resultBox">
+                        <h5><i class="fas fa-clipboard-check me-2 text-primary"></i>Result</h5>
+                        <div class="rb-row"><span class="rb-label">Verdict: </span><span id="rbVerdict" class="rb-verdict"></span></div>
+                        <div class="rb-row"><span class="rb-label">Reason (বাংলা): </span><span id="rbReason"></span></div>
+                        <div class="rb-row"><span class="rb-label">Suggestion / Action: </span><span id="rbSuggestion"></span></div>
+                        <div class="rb-row"><span class="rb-label">Recommendation: </span><span id="rbRecommendation"></span></div>
+                        <div class="button-section" style="justify-content:center; margin-top:25px;">
+                            <button type="button" class="btn btn-secondary btn-lg" onclick="ResetForm()">
+                                <i class="fas fa-redo me-2"></i>Upload Another
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section" style="padding-top:0;">
+                    <div id="alertMessage" class="alert-notification">
+                        <div id="alertContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedFiles = [];
+        const MAX_FILE_SIZE = 5242880;
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const filesList = document.getElementById('filesList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const alertMessage = document.getElementById('alertMessage');
+        const uploadFormSection = document.getElementById('uploadFormSection');
+        const loaderPanel = document.getElementById('loaderPanel');
+
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDrop(e) { e.preventDefault(); uploadArea.classList.remove('dragover'); processFiles(e.dataTransfer.files); }
+        function handleFileSelect(e) { processFiles(e.target.files); }
+
+        function processFiles(files) {
+            const documentType = document.getElementById('documentType').value;
+            if (!documentType) { ShowMessage('Please select a document type first', 'error'); return; }
+            Array.from(files).forEach(file => {
+                if (ValidateFile(file)) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        selectedFiles.push({ name: file.name, size: file.size, type: file.type, base64: e.target.result, documentType: documentType });
+                        RenderFiles();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function ValidateFile(file) {
+            if (file.size > MAX_FILE_SIZE) { ShowMessage(file.name + ' exceeds 5MB limit', 'error'); return false; }
+            const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!validTypes.includes(file.type)) { ShowMessage(file.name + ' is not a valid format (JPG, PNG, PDF)', 'error'); return false; }
+            return true;
+        }
+
+        function RenderFiles() {
+            filesList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 col-xxl-3';
+                const fileSize = (file.size / 1024).toFixed(2);
+                col.innerHTML = '<div class="file-card">' +
+                    '<i class="fas ' + (file.type === 'application/pdf' ? 'fa-file-pdf text-danger' : 'fa-image text-success') + ' file-icon"></i>' +
+                    '<p class="text-truncate small mb-2" title="' + file.name + '"><strong>' + file.name + '</strong></p>' +
+                    '<small class="text-muted d-block mb-2">' + fileSize + ' KB</small>' +
+                    '<div style="background: #667eea; color: white; padding: 6px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem; font-weight: 600;">' +
+                    file.documentType +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="RemoveFile(' + index + ')">' +
+                    '<i class="fas fa-trash-alt me-1"></i>Remove' +
+                    '</button>' +
+                    '</div>';
+                filesList.appendChild(col);
+            });
+            document.getElementById('filesContainer').style.display = selectedFiles.length > 0 ? 'block' : 'none';
+            document.getElementById('fileCount').textContent = selectedFiles.length;
+            uploadBtn.disabled = selectedFiles.length === 0;
+        }
+
+        function RemoveFile(index) { selectedFiles.splice(index, 1); RenderFiles(); }
+
+        function ResetForm() {
+            selectedFiles = [];
+            fileInput.value = '';
+            document.getElementById('documentType').value = '';
+            RenderFiles();
+            alertMessage.classList.remove('show');
+            hideLoader();
+            uploadFormSection.style.display = 'block';
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload Documents';
+        }
+
+        function ShowMessage(message, type) {
+            const alertContent = document.getElementById('alertContent');
+            if (!alertMessage || !alertContent) { alert(message); return; }
+            const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+            alertContent.innerHTML = '<i class="fas ' + icon + ' alert-icon"></i><span>' + message + '</span>';
+            alertMessage.className = 'alert-notification alert-' + type;
+            alertMessage.classList.add('show');
+            if (type === 'error') { setTimeout(() => { alertMessage.classList.remove('show'); }, 5000); }
+        }
+
+        // ---- Loader control ----
+        function showLoader() { uploadFormSection.style.display = 'none'; loaderPanel.style.display = 'block'; }
+        function hideLoader() { loaderPanel.style.display = 'none'; document.getElementById('resultBox').style.display = 'none'; }
+
+        function setProgress(pct) {
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressPercent').textContent = pct + '%';
+        }
+
+        function setStageStatus(title, sub, statusText) {
+            document.getElementById('loaderStageTitle').textContent = title;
+            document.getElementById('loaderStageSub').textContent = sub;
+            document.getElementById('loaderStatusText').textContent = statusText;
+        }
+
+        // stageIndex: 1=Upload,2=OCR,3=Validate ; markDone marks previous stages done and current active
+        function activateStage(stageIndex) {
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById('stage' + i);
+                el.classList.remove('active', 'done');
+                if (i < stageIndex) el.classList.add('done');
+                else if (i === stageIndex) el.classList.add('active');
+            }
+            for (let i = 1; i <= 2; i++) {
+                const line = document.getElementById('line' + i);
+                line.classList.toggle('done', i < stageIndex);
+            }
+        }
+
+        function completeAllStages() {
+            for (let i = 1; i <= 3; i++) document.getElementById('stage' + i).classList.add('done');
+            document.getElementById('stage3').classList.remove('active');
+            document.getElementById('line1').classList.add('done');
+            document.getElementById('line2').classList.add('done');
+        }
+
+        function showResult(result) {
+            document.getElementById('loaderStatusRow').style.display = 'none';
+            const box = document.getElementById('resultBox');
+            const verdict = (result.result.verdict || '').toString();
+            const verdictEl = document.getElementById('rbVerdict');
+            verdictEl.textContent = verdict;
+            verdictEl.className = 'rb-verdict ' +
+                (verdict.toLowerCase().includes('verified') ? 'verified' :
+                    verdict.toLowerCase().includes('caution') ? 'caution' : 'high-risk');
+            const reasons = result.result.reasonsBangla || result.result.reasonBangla || [];
+            const reasonList = Array.isArray(reasons) ? reasons : [reasons];
+            document.getElementById('rbReason').innerHTML = reasonList.length
+                ? '<ul style="margin:0;padding-left:18px;">' + reasonList.map(r => '<li>' + r + '</li>').join('') + '</ul>'
+                : '-';
+            document.getElementById('rbSuggestion').textContent = result.result.suggestedAction || result.result.suggestedAction || '-';
+            document.getElementById('rbRecommendation').textContent = result.result.bngRecommendation || result.result.bngRecommendation || '-';
+            box.style.display = 'block';
+        }
+
+        function failLoader(message) {
+            hideLoader();
+            uploadFormSection.style.display = 'block';
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Upload Documents';
+            ShowMessage(message, 'error');
+        }
+
+        document.getElementById('uploadBtn').addEventListener('click', async function() {
+            if (selectedFiles.length === 0) { ShowMessage('Please select at least one file', 'error'); return; }
+
+            showLoader();
+            document.getElementById('loaderStatusRow').style.display = 'inline-flex';
+            activateStage(1);
+            setProgress(5);
+            setStageStatus('Uploading documents', 'Sending your files securely...', 'Uploading ' + selectedFiles.length + ' file(s)...');
+
+            try {
+                const payload = {
+                    documents: selectedFiles.map(f => ({ fileName: f.name, fileSize: f.size, fileData: f.base64, documentType: f.documentType }))
+                };
+
+                const response = await fetch('@Url.Action("UploadDocuments", "Documents", new { area = "User" })', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (!result.success) { failLoader('Error: ' + result.message); return; }
+
+                setProgress(35);
+                activateStage(2);
+                setStageStatus('Extracting text', 'Running OCR on your documents...', 'Reading document fields...');
+
+                const ocrResponse = await fetch(`@Url.Action("OCRAnalysis", "Documents", new { area = "User" })?requestId=${result.verificationId}`, { method: 'POST' });
+                const ocrResult = await ocrResponse.json();
+
+                if (!ocrResult.success) { failLoader('OCR Error: ' + ocrResult.message); return; }
+
+                setProgress(70);
+                activateStage(3);
+                setStageStatus('AI validation', 'Cross-checking registry and scam patterns...', 'Running fraud detection model...');
+
+                const validationResponse = await fetch(`@Url.Action("ValidationAndAIAnalysis", "Documents", new { area = "User" })?requestId=${result.verificationId}`, { method: 'POST' });
+                const validationResult = await validationResponse.json();
+
+                if (!validationResult.success) { failLoader('Validation And AI Analysis Error: ' + validationResult.message); return; }
+
+                setProgress(100);
+                completeAllStages();
+                setStageStatus('Verified', 'Analysis complete.', '');
+                showResult(validationResult.data || validationResult);
+
+            } catch (error) {
+                failLoader('Error: ' + error.message);
+            }
+        });
+    </script>
+}

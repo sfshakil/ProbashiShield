@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+@using Infosight.Web.Helpers
+@{
+    ViewData["Title"] = "Error";
+    Layout = "~/Views/Shared/_LayoutExternal.cshtml";
+}
+
+<style type="text/css" nonce="@Html.GenerateNonce()">
+
+.center-container {
+    position: relative;
+    min-height: 80vh !important;
+}
+
+.center-content {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    color: red;
+}
+</style>
+
+<nav id="topnavbar" class="navbar navbar-expand navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="nav navbar-nav ms-auto mx-auto">
+                <li class="h4 my-auto"><span class="text-primary fw-bold">CUSTOMER</span> <span class="text-warning fw-bold">360°</span></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="center-container">
+    <div class="center-content">
+        <h1 class="text-center">@ViewBag.Errormessage</h1>
+    </div>
+</div>
