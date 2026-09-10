@@ -51,7 +51,7 @@ namespace ProbashiShield.Web.Areas.User.Controllers
 
                 if (result != null)
                 {
-                    return Json(new { success = true, message = "Documents uploaded successfully", verificationId = verificationRequest.Id });
+                    return Json(new { success = true, message = "Documents uploaded successfully", verificationId = verificationRequest.Id, requestId = verificationRequest.RequestId.ToString().Substring(0, 8).ToUpper() });
                 }
                 else
                 {
@@ -165,7 +165,7 @@ namespace ProbashiShield.Web.Areas.User.Controllers
                     .Get(d => d.VerificationRequestId == id).ToListAsync();
 
                 var ocrResult = await _unitOfWork.OCRResultRepository
-                    .Get(o => o.RequestId == id).FirstOrDefaultAsync();
+                    .Get(o => o.RequestId == id).OrderByDescending(a => a.ProcessedAt).FirstOrDefaultAsync();
 
                 var aiLog = await _unitOfWork.AIAnalysisLogRepository
                     .Get(a => a.ResultId == id).OrderByDescending(a => a.CreatedAt).FirstOrDefaultAsync();
@@ -209,6 +209,45 @@ namespace ProbashiShield.Web.Areas.User.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<JsonResult> GetAllVerificationRequests()
+        {
+            try
+            {
+                var draw = Request.Form["draw"].FirstOrDefault();
+                var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault() ?? "0");
+                var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault() ?? "10");
+                var searchValue = Request.Form["sSearch"].FirstOrDefault();
+
+                var baseQuery = _unitOfWork.VerificationRequestRepository.GetAll();
+                var recordsTotal = await baseQuery.CountAsync();
+
+                var query = baseQuery.AsQueryable();
+                if (!string.IsNullOrWhiteSpace(searchValue))
+                {
+                    query = query.Where(v => v.RequestId.ToString().Contains(searchValue));
+                }
+                var recordsFiltered = await query.CountAsync();
+
+                var data = await query
+                    .OrderByDescending(v => v.RequestedAt)
+                    .Skip(start).Take(length)
+                    .Select(v => new
+                    {
+                        id = v.Id,
+                        requestId = v.RequestId.ToString().Substring(0, 8).ToUpper(),
+                        requestedAt = v.RequestedAt
+                    })
+                    .ToListAsync();
+
+                return Json(new { draw, recordsFiltered, recordsTotal, data });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { draw = 0, recordsFiltered = 0, recordsTotal = 0, data = new object[0], error = ex.Message });
             }
         }
     }

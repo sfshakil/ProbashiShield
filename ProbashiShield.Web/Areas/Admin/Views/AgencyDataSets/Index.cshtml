@@ -95,6 +95,7 @@
             dataTable = $('#agencyDataSetsTable').DataTable({
                 "processing": true,
                 "serverSide": true,
+                "filter": false,
                 "ajax": {
                     "url": "@Url.Action("GetAllAgencyDataSets", "AgencyDataSets", new { area = "Admin" })",
                     "type": "POST",

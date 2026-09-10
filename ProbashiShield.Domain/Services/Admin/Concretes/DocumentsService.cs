@@ -324,6 +324,8 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         aiAnalysis = await _ollamaService.AnalyzeForFraud(prompt);
                         aiAnalysis.prompt = prompt;
 
+                        ApplyAiGuardrail(aiAnalysis, ocrResult);
+
                         var transPrompt = FraudDetectionPromptBuilder.BuildTransatorPrompt(aiAnalysis.Recommendation);
                         translatedRecommendation = await _ollamaService.TranslateEngToBng(transPrompt);
 
@@ -356,6 +358,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
             public string Verdict { get; set; }
             public List<string> ReasonsBangla { get; set; } = new();
             public string SuggestedAction { get; set; } // proceed / ask agency to clarify / report to BMET
+            public string Recommendation { get; set; } // raw
             public string BngRecommendation { get; set; } // translated recommendation in Bengali
         }
 
@@ -397,8 +400,24 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     VerificationVerdict.Caution => CautionAction,
                     _ => VerifiedAction
                 },
-                BngRecommendation = bngRecommendation
+                BngRecommendation = bngRecommendation,
+                Recommendation = aiResponse.Recommendation
             };
+        }
+        
+        private void ApplyAiGuardrail(OllamaVerificationResult ai, OCRResult ocrResult)
+        {
+            bool isDegenerate = ai.RiskScore == 0.0m && ai.ConfidenceInAssessment == 0.0m;
+            bool jobDataIncomplete = string.IsNullOrWhiteSpace(ocrResult.JobTitle)
+                || string.IsNullOrWhiteSpace(ocrResult.DestinationCountry)
+                || ocrResult.Salary is null or 0
+                || ocrResult.RecruitmentFee is null or 0;
+
+            if (isDegenerate && jobDataIncomplete)
+            {
+                ai.RiskScore = 0.35m;
+                ai.Recommendation = "AI analysis was inconclusive because key job/salary/fee details were missing or zero — manual verification recommended.";
+            }
         }
     }
 }

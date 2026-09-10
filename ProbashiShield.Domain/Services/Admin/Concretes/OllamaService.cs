@@ -166,6 +166,8 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
 
                 var fraudDetected = root.TryGetProperty("fraud_detected", out var fd) && fd.GetBoolean();
                 var riskScore = root.TryGetProperty("risk_score", out var rs) ? rs.GetDecimal() : 0.0m;
+                var confidence = root.TryGetProperty("confidence_in_assessment", out var conf) ? conf.GetDecimal() : 0.0m;
+                result.ConfidenceInAssessment = confidence;
                 var concerns = root.TryGetProperty("concerns", out var c) && c.ValueKind == JsonValueKind.Array
                     ? string.Join("; ", c.EnumerateArray().Select(x => x.GetString()))
                     : null;

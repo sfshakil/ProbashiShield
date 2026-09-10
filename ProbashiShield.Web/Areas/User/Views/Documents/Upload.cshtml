@@ -403,6 +403,23 @@
         background: #f8d7da;
         color: #721c24;
     }
+
+    .request-id-badge {
+        display: inline-block;
+        background: #eef0ff;
+        color: #667eea;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+
+        .request-id-badge:hover {
+            background: #667eea;
+            color: white;
+        }
 </style>
 
 <div class="upload-container">
@@ -491,10 +508,14 @@
 
                     <div class="result-box" id="resultBox">
                         <h5><i class="fas fa-clipboard-check me-2 text-primary"></i>Result</h5>
+                        <div class="rb-row">
+                            <span class="request-id-badge" id="rbRequestId" onclick="CopyRequestId()" title="Click to copy"></span>
+                        </div>
                         <div class="rb-row"><span class="rb-label">Verdict: </span><span id="rbVerdict" class="rb-verdict"></span></div>
                         <div class="rb-row"><span class="rb-label">Reason (বাংলা): </span><span id="rbReason"></span></div>
                         <div class="rb-row"><span class="rb-label">Suggestion / Action: </span><span id="rbSuggestion"></span></div>
-                        <div class="rb-row"><span class="rb-label">Recommendation: </span><span id="rbRecommendation"></span></div>
+                        <div class="rb-row"><span class="rb-label">AI Recommendation: </span><span id="rbRecommendation"></span></div>
+                        <div class="rb-row"><span class="rb-label">AI Recommendation (বাংলা): </span><span id="rbBngRecommendation"></span></div>
                         <div class="button-section" style="justify-content:center; margin-top:25px;">
                             <button type="button" class="btn btn-secondary btn-lg" onclick="ResetForm()">
                                 <i class="fas fa-redo me-2"></i>Upload Another
@@ -516,6 +537,7 @@
 @section Scripts {
     <script>
         let selectedFiles = [];
+        let currentRequestShortId = '';
         const MAX_FILE_SIZE = 5242880;
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -643,6 +665,7 @@
         function showResult(result) {
             document.getElementById('loaderStatusRow').style.display = 'none';
             const box = document.getElementById('resultBox');
+            document.getElementById('rbRequestId').innerHTML = '<i class="fas fa-hashtag me-1"></i>' + currentRequestShortId + ' <i class="fas fa-copy ms-1"></i>';
             const verdict = (result.result.verdict || '').toString();
             const verdictEl = document.getElementById('rbVerdict');
             verdictEl.textContent = verdict;
@@ -655,7 +678,8 @@
                 ? '<ul style="margin:0;padding-left:18px;">' + reasonList.map(r => '<li>' + r + '</li>').join('') + '</ul>'
                 : '-';
             document.getElementById('rbSuggestion').textContent = result.result.suggestedAction || result.result.suggestedAction || '-';
-            document.getElementById('rbRecommendation').textContent = result.result.bngRecommendation || result.result.bngRecommendation || '-';
+            document.getElementById('rbRecommendation').textContent = result.result.recommendation || result.result.recommendation || '-';
+            document.getElementById('rbBngRecommendation').textContent = result.result.bngRecommendation || result.result.bngRecommendation || '-';
             box.style.display = 'block';
         }
 
@@ -689,6 +713,7 @@
                 const result = await response.json();
 
                 if (!result.success) { failLoader('Error: ' + result.message); return; }
+                currentRequestShortId = result.requestId;
 
                 setProgress(35);
                 activateStage(2);
@@ -717,5 +742,11 @@
                 failLoader('Error: ' + error.message);
             }
         });
+        
+        function CopyRequestId() {
+            navigator.clipboard.writeText(currentRequestShortId).then(() => {
+                alert('Request ID copied: ' + currentRequestShortId);
+            });
+        }
     </script>
 }

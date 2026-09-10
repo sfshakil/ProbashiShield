@@ -1,197 +1,100 @@
-@model IEnumerable<ProbashiShield.Database.DBEntities.VerificationRequest>
-
 @{
     ViewData["Title"] = "My Verification Requests";
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
-    int currentPage = ViewBag.CurrentPage ?? 1;
-    int totalPages = ViewBag.TotalPages ?? 0;
 }
 
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>My Verification Requests</h2>
+            <hr />
+        </div>
+    </div>
+    <div class="col-md-4 text-start pb-2">
+        <a href="@Url.Action("Upload", "Documents", new { area = "User" })" class="btn btn-primary">
+            <i class="fas fa-cloud-upload-alt"></i> Upload New Documents
+        </a>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by Request ID...">
+        </div>
+        <div class="col-md-6">
+            <button class="btn btn-primary" id="btnSearch">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Verification Requests List</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="verificationRequestsTable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Requested At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalRequestTitle">Request Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-tabs">
+                    <button class="detail-tab-btn active" data-tab="docs" onclick="SwitchTab('docs')">Documents</button>
+                    <button class="detail-tab-btn" data-tab="ocr" onclick="SwitchTab('ocr')">OCR Result</button>
+                    <button class="detail-tab-btn" data-tab="verdict" onclick="SwitchTab('verdict')">AI &amp; Verdict</button>
+                </div>
+
+                <div id="pane-docs" class="detail-pane active">
+                    <div id="docsContent" class="doc-grid-modal"></div>
+                </div>
+                <div id="pane-ocr" class="detail-pane">
+                    <div id="ocrContent"></div>
+                </div>
+                <div id="pane-verdict" class="detail-pane">
+                    <div id="verdictContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="filePreviewName"></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center" id="filePreviewBody"></div>
+        </div>
+    </div>
+</div>
+
 <style>
-    .header-bar {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px;
-        border-radius: 15px;
-        color: white;
-        margin-bottom: 40px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-        .header-bar h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-    .btn-create {
-        background: white;
-        color: #667eea;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .btn-create:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            color: #764ba2;
-        }
-
-    .verification-card {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        transition: all 0.3s ease;
-    }
-
-        .verification-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-        }
-
-    .card-header-status {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 22px 25px;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-        .card-header-status h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-    .status-badge {
-        background: rgba(255,255,255,0.3);
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    .card-body {
-        padding: 22px 25px;
-    }
-
-    .info-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .info-item {
-        padding: 12px 15px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-    }
-
-    .info-label {
-        color: #666;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-    }
-
-    .info-value {
-        color: #333;
-        font-size: 1rem;
-        font-weight: 500;
-        word-break: break-word;
-    }
-
-    .card-footer-actions {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    .btn-view-details {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 10px 26px;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-
-        .btn-view-details:hover {
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102,126,234,0.3);
-        }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #666;
-    }
-
-    .empty-state-icon {
-        font-size: 4rem;
-        color: #ddd;
-        margin-bottom: 20px;
-    }
-
-    .empty-state h3 {
-        font-size: 1.5rem;
-        margin-bottom: 10px;
-        color: #333;
-    }
-
-    .pagination-bar {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        margin-top: 30px;
-    }
-
-        .pagination-bar a, .pagination-bar span {
-            min-width: 40px;
-            text-align: center;
-            padding: 8px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            color: #667eea;
-            border: 1px solid #e0e0e0;
-        }
-
-            .pagination-bar a:hover {
-                background: #f5f7fa;
-            }
-
-        .pagination-bar .active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-        }
-
-        .pagination-bar .disabled {
-            color: #ccc;
-            pointer-events: none;
-        }
-
-    /* Modal */
     .detail-tabs {
         display: flex;
         gap: 6px;
@@ -312,130 +215,69 @@
     }
 </style>
 
-<div class="container-lg">
-    <div class="header-bar">
-        <h1><i class="fas fa-file-check me-2"></i>My Verification Requests</h1>
-        <a href="@Url.Action("Upload", "Documents", new { area = "User" })" class="btn-create">
-            <i class="fas fa-plus"></i>Upload New Documents
-        </a>
-    </div>
-
-    @if (Model != null && Model.Any())
-    {
-        @foreach (var verification in Model)
-        {
-            <div class="verification-card">
-                <div class="card-header-status">
-                    <h3>Request #@verification.RequestId.ToString().Substring(0, 8).ToUpper()</h3>
-                    <div class="status-badge"><i class="fas fa-clock me-1"></i>@verification.RequestedAt.ToString("MMM dd, yyyy hh:mm tt")</div>
-                </div>
-                <div class="card-body">
-                    <div class="info-row">
-                        <div class="info-item">
-                            <div class="info-label"><i class="fas fa-phone me-1"></i>Mobile Number</div>
-                            <div class="info-value">@(string.IsNullOrEmpty(verification.MobileNumber) ? "Not provided" : verification.MobileNumber)</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label"><i class="fas fa-calendar me-1"></i>Request Date</div>
-                            <div class="info-value">@verification.RequestedAt.ToString("MMM dd, yyyy")</div>
-                        </div>
-                    </div>
-                    <div class="card-footer-actions">
-                        <button type="button" class="btn btn-view-details" onclick="OpenDetails(@verification.Id, '@verification.RequestId.ToString().Substring(0, 8).ToUpper()')">
-                            <i class="fas fa-eye me-2"></i>View Details
-                        </button>
-                    </div>
-                </div>
-            </div>
-        }
-
-        @if (totalPages > 1)
-        {
-            <div class="pagination-bar">
-                <a class="@(currentPage <= 1 ? "disabled" : "")" href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = currentPage - 1 })"><i class="fas fa-chevron-left"></i></a>
-                @for (int p = 1; p <= totalPages; p++)
-                {
-                    if (p == currentPage)
-                    {
-                        <span class="active">@p</span>
-                    }
-                    else
-                    {
-                        <a href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = p })">@p</a>
-                    }
-                }
-                <a class="@(currentPage >= totalPages ? "disabled" : "")" href="@Url.Action("MyDocuments", "Documents", new { area = "User", page = currentPage + 1 })"><i class="fas fa-chevron-right"></i></a>
-            </div>
-        }
-    }
-    else
-    {
-        <div class="verification-card">
-            <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
-                <h3>No Verification Requests Yet</h3>
-                <p>You haven't submitted any documents for verification yet.</p>
-                <a href="@Url.Action("Upload", "Documents", new { area = "User" })" class="btn btn-primary btn-lg">
-                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your First Document
-                </a>
-            </div>
-        </div>
-    }
-</div>
-
-<!-- Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <h5 class="modal-title" id="modalRequestTitle">Request Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-tabs">
-                    <button class="detail-tab-btn active" data-tab="docs" onclick="SwitchTab('docs')">Documents</button>
-                    <button class="detail-tab-btn" data-tab="ocr" onclick="SwitchTab('ocr')">OCR Result</button>
-                    <button class="detail-tab-btn" data-tab="verdict" onclick="SwitchTab('verdict')">AI &amp; Verdict</button>
-                </div>
-
-                <div id="pane-docs" class="detail-pane active">
-                    <div id="docsContent" class="doc-grid-modal"></div>
-                </div>
-
-                <div id="pane-ocr" class="detail-pane">
-                    <div id="ocrContent"></div>
-                </div>
-
-                <div id="pane-verdict" class="detail-pane">
-                    <div id="verdictContent"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- File Preview Modal -->
-<div class="modal fade" id="filePreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="filePreviewName"></h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center" id="filePreviewBody"></div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
-    <script>
+    <script src="~/lib/bootstrap-datatables/js/datatables.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript">
+        var dataTable;
+
+        $(document).ready(function() {
+            InitializeDataTable();
+
+            $('#btnSearch').click(function() {
+                dataTable.ajax.reload();
+            });
+
+            $('#searchInput').keypress(function(e) {
+                if (e.which == 13) {
+                    dataTable.ajax.reload();
+                    return false;
+                }
+            });
+        });
+
+        function InitializeDataTable() {
+            dataTable = $('#verificationRequestsTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": false,
+                "ajax": {
+                    "url": "@Url.Action("GetAllVerificationRequests", "Documents", new { area = "User" })",
+                    "type": "POST",
+                    "datatype": "json",
+                    "data": function(d) {
+                        d.iDisplayStart = d.start;
+                        d.iDisplayLength = d.length;
+                        d.sSearch = $('#searchInput').val();
+                    }
+                },
+                "columnDefs": [
+                    {
+                        "targets": 2,
+                        "orderable": false,
+                        "render": function(data, type, row) {
+                            return `<button class="btn btn-sm btn-primary" onclick="OpenDetails(${row.id}, '${row.requestId}')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>`;
+                        }
+                    }
+                ],
+                "columns": [
+                    { "data": "requestId" },
+                    { "data": "requestedAt", "render": function(data) { return data ? new Date(data).toLocaleString() : ''; } },
+                    { "data": null }
+                ]
+            });
+        }
+
         function SwitchTab(tab) {
             document.querySelectorAll('.detail-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
             document.querySelectorAll('.detail-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + tab));
         }
 
-        function OpenDetails(id, shortId) {
-            document.getElementById('modalRequestTitle').textContent = 'Request #' + shortId;
+        function OpenDetails(id, requestId) {
+            document.getElementById('modalRequestTitle').textContent = 'Request #' + requestId;
             document.getElementById('docsContent').innerHTML = '<div class="empty-msg"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
             document.getElementById('ocrContent').innerHTML = '';
             document.getElementById('verdictContent').innerHTML = '';
@@ -452,8 +294,8 @@
                         return;
                     }
                     RenderDocuments(data.documents);
-                    RenderOcr(data.ocrResult);
-                    RenderVerdict(data.verdictJson, data.aiLog);
+                    RenderOcr(data.ocrResult, id);
+                    RenderVerdict(data.verdictJson, data.aiLog, id);
                 })
                 .catch(err => {
                     document.getElementById('docsContent').innerHTML = '<div class="empty-msg">Error loading details</div>';
@@ -485,7 +327,7 @@
             new bootstrap.Modal(document.getElementById('filePreviewModal')).show();
         }
 
-        function RenderOcr(ocr) {
+        function RenderOcr(ocr, id) {
             const el = document.getElementById('ocrContent');
             if (!ocr) { el.innerHTML = '<div class="empty-msg">OCR not run yet</div>'; return; }
             el.innerHTML = '<table class="kv-table">' +
@@ -497,14 +339,41 @@
                 Row('Recruitment Fee', (ocr.recruitmentFee ?? '-') + ' ' + (ocr.recruitmentFeeCurrency || '')) +
                 Row('OCR Confidence', ocr.ocrConfidence != null ? (ocr.ocrConfidence + '%') : '-') +
                 Row('Processed At', ocr.processedAt ? new Date(ocr.processedAt).toLocaleString() : '-') +
-                '</table>';
+                '</table>' +
+                '<button type="button" class="btn btn-primary mt-2" onclick="ReRunOcr(' + id + ')"><i class="fas fa-rotate me-2"></i>Re-run OCR</button>';
+        }
+
+        async function ReRunOcr(id) {
+            const el = document.getElementById('ocrContent');
+            el.innerHTML = '<div class="empty-msg"><i class="fas fa-spinner fa-spin fa-2x" style="color:#667eea;"></i><p class="mt-3">Re-running OCR extraction...</p></div>';
+
+            try {
+                const ocrRes = await fetch('@Url.Action("OCRAnalysis", "Documents", new { area = "User" })?requestId=' + id, { method: 'POST' });
+                const ocrData = await ocrRes.json();
+
+                if (!ocrData.success) {
+                    el.innerHTML = '<div class="empty-msg">' + ocrData.message + '</div>';
+                    return;
+                }
+
+                const detailsRes = await fetch('@Url.Action("GetVerificationDetails", "Documents", new { area = "User" })?id=' + id);
+                const detailsData = await detailsRes.json();
+
+                if (detailsData.success) {
+                    RenderOcr(detailsData.ocrResult, id);
+                } else {
+                    el.innerHTML = '<div class="empty-msg">' + detailsData.message + '</div>';
+                }
+            } catch (err) {
+                el.innerHTML = '<div class="empty-msg">Error: ' + err.message + '</div>';
+            }
         }
 
         function Row(label, value) {
             return '<tr><td>' + label + '</td><td>' + (value ?? '-') + '</td></tr>';
         }
 
-        function RenderVerdict(verdictJson, aiLog) {
+        function RenderVerdict(verdictJson, aiLog, id) {
             const el = document.getElementById('verdictContent');
             if (!verdictJson) { el.innerHTML = '<div class="empty-msg">Validation not run yet</div>'; return; }
 
@@ -516,15 +385,35 @@
             const reasons = verdict.reasonsBangla || verdict.ReasonsBangla || [];
             const suggestion = verdict.suggestedAction || verdict.SuggestedAction || '-';
             const bngRec = verdict.bngRecommendation || verdict.BngRecommendation || '';
+            const rec = verdict.recommendation || verdict.Recommendation || '';
 
             let html = '<span class="verdict-badge ' + badgeClass + '">' + v + '</span>';
-            if (aiLog) html += '<p style="color:#888; font-size:0.85rem; margin-top:-8px;">Risk score: ' + aiLog.riskLevel + '</p>';
             html += '<h6>কারণসমূহ (Reasons)</h6>';
             html += reasons.length ? '<ul class="reason-list">' + reasons.map(r => '<li>' + r + '</li>').join('') + '</ul>' : '<p class="empty-msg">-</p>';
             html += '<h6>Suggested Action</h6><p>' + suggestion + '</p>';
+            if (rec) html += '<h6>AI Recommendation</h6><p>' + rec + '</p>';
             if (bngRec) html += '<h6>AI Recommendation (বাংলা)</h6><p>' + bngRec + '</p>';
+            html += '<button type="button" class="btn btn-primary mt-2" onclick="ReAnalyze(' + id + ')"><i class="fas fa-rotate me-2"></i>Re-analyze</button>';
 
             el.innerHTML = html;
+        }
+
+        async function ReAnalyze(id) {
+            const el = document.getElementById('verdictContent');
+            el.innerHTML = '<div class="empty-msg"><i class="fas fa-spinner fa-spin fa-2x" style="color:#667eea;"></i><p class="mt-3">Running AI analysis again...</p></div>';
+
+            try {
+                const res = await fetch('@Url.Action("ValidationAndAIAnalysis", "Documents", new { area = "User" })?requestId=' + id, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    RenderVerdict(JSON.stringify(data.result), null, id);
+                } else {
+                    el.innerHTML = '<div class="empty-msg">' + data.message + '</div>';
+                }
+            } catch (err) {
+                el.innerHTML = '<div class="empty-msg">Error: ' + err.message + '</div>';
+            }
         }
     </script>
 }
