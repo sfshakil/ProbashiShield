@@ -24,6 +24,7 @@ namespace ProbashiShield.Domain.Services.Admin.Contracts
         public string Analysis { get; set; }
         public string Recommendation { get; set; }
         public string prompt { get; set; }
+        public string Summary { get; set; }
         public decimal ConfidenceInAssessment { get; set; }
     }
 }

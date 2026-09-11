@@ -51,7 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Constants\" />
     <Folder Include="Extentions\" />
     <Folder Include="ServiceClients\Contracts\" />
     <Folder Include="Services\Default\Concretes\" />

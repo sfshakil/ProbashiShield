@@ -1,8 +1,8 @@
 ﻿using ProbashiShield.Database.DBEntities;
+using ProbashiShield.Domain.Models;
 using ProbashiShield.Shared.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using static ProbashiShield.Domain.Services.Admin.Concretes.DocumentsService;
 
 namespace ProbashiShield.Domain.Services.Admin.Contracts
 {

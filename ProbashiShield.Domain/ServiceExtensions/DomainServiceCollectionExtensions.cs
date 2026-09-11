@@ -47,6 +47,24 @@ namespace ProbashiShield.Domain.ServiceExtensions
             })
             .AddPolicyHandler(GetRetryPolicy(configuration))
             .AddPolicyHandler(GetCircuitBreakerPolicy(configuration));
+            
+            services.AddHttpClient<IGeminiService, GeminiService>(
+            client =>
+            {
+                string baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromMinutes(3); // 3 minutes
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback =
+                (httpRequestMessage, cert, chain, policyErrors) =>
+                {
+                    return true;
+                }
+            })
+            .AddPolicyHandler(GetRetryPolicy(configuration))
+            .AddPolicyHandler(GetCircuitBreakerPolicy(configuration));
         }
 
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(IConfiguration configuration)

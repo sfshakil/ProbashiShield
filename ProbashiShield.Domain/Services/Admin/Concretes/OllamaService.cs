@@ -101,7 +101,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     options = new
                     {
                         temperature = 0.1,
-                        num_predict = 300
+                        num_predict = 1000
                     }
                 };
 
@@ -126,7 +126,6 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     raw, "<think>.*?</think>", "", System.Text.RegularExpressions.RegexOptions.Singleline).Trim();
                 cleaned = cleaned.Trim('"', '`', '\n', ' ');
 
-                // Safety net: strip anything outside Bangla script, ASCII digits/punctuation, and whitespace
                 cleaned = System.Text.RegularExpressions.Regex.Replace(
                     cleaned, @"[^\u0980-\u09FF0-9\s.,%()\-–।]", "");
 

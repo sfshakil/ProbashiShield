@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using OpenCvSharp;
 using ProbashiShield.DAL.UnitOfWork.Contracts;
 using ProbashiShield.Database.DBEntities;
+using ProbashiShield.Domain.Constants;
 using ProbashiShield.Domain.Models;
 using ProbashiShield.Domain.Services.Admin.Contracts;
 using ProbashiShield.Shared.Models;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static ProbashiShield.Domain.Constants.CommonConstant;
 
 namespace ProbashiShield.Domain.Services.Admin.Concretes
 {
@@ -18,17 +20,22 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
         private readonly IMasterUnitOfWork _unitOfWork;
         private readonly IOCRService _oCRService;
         private readonly IOllamaService _ollamaService;
+        private readonly IGeminiService _geminiService;
         private readonly ICurrencyService _currencyService;
-
+        private readonly bool _isOllamaActive;
         public DocumentsService(IMasterUnitOfWork unitOfWork,
             IOCRService oCRService,
             IOllamaService ollamaService,
-            ICurrencyService currencyService)
+            IGeminiService geminiService,
+            ICurrencyService currencyService,
+            IConfiguration config)
         {
             _unitOfWork = unitOfWork;
             _oCRService = oCRService;
             _ollamaService = ollamaService;
+            _geminiService = geminiService;
             _currencyService = currencyService;
+            _isOllamaActive = config["IsOllamaActive"] == "true" ? true : false ;
         }
 
         public async Task<long> UploadDocuments(VerificationRequest verificationRequest, List<DocumentFile> documents)
@@ -98,7 +105,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 await _unitOfWork.AIAnalysisLogRepository.AddAsync(aIAnalysisLog);
 
                 var verdictResult = BuildVerdict(response, aiErrors, aiResponse, bngRecommendation);
-                
+
                 VerificationResult verificationResult = new VerificationResult
                 {
                     ResultId = requestId,
@@ -314,7 +321,8 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
             var errors = new List<string>();
             var aiAnalysis = new OllamaVerificationResult();
             var translatedRecommendation = "";
-            if (_ollamaService != null)
+            
+            if (_isOllamaActive)
             {
                 try
                 {
@@ -340,26 +348,34 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     System.Diagnostics.Debug.WriteLine($"Ollama service error: {ex.Message}");
                 }
             }
+            else
+            {
+                try
+                {
+                    if (await _geminiService.IsHealthyAsync())
+                    {
+                        var prompt = FraudDetectionPromptBuilder.BuildPrompt(ocrResult, response);
+                        aiAnalysis = await _geminiService.AnalyzeForFraud(prompt);
+                        aiAnalysis.prompt = prompt;
+
+                        ApplyAiGuardrail(aiAnalysis, ocrResult);
+
+                        var transPrompt = FraudDetectionPromptBuilder.BuildTransatorPrompt(aiAnalysis.Recommendation);
+                        translatedRecommendation = await _geminiService.TranslateEngToBng(transPrompt);
+
+                        if (aiAnalysis.RiskScore > 0.6m)
+                        {
+                            errors.Add($"AI Fraud Detection Alert: {aiAnalysis.Recommendation} (Risk Score: {aiAnalysis.RiskScore:P})");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Gemini service error: {ex.Message}");
+                }
+            }
+
             return (errors.Count == 0, errors, aiAnalysis, translatedRecommendation);
-        }
-
-        private const string HighRiskAction = "টাকা প্রদানের আগে এজেন্সিকে ব্যাখ্যা দিতে বলুন অথবা বিএমইটি/রামরু-তে অভিযোগ করুন।";
-        private const string CautionAction = "এগোনোর আগে এজেন্সির কাছে বিস্তারিত জানতে চান।";
-        private const string VerifiedAction = "নথিটি সঠিক মনে হচ্ছে, আপনি এগোতে পারেন।";
-        public enum VerificationVerdict
-        {
-            Verified,
-            Caution,
-            HighRisk
-        }
-
-        public class VerdictResult
-        {
-            public string Verdict { get; set; }
-            public List<string> ReasonsBangla { get; set; } = new();
-            public string SuggestedAction { get; set; } // proceed / ask agency to clarify / report to BMET
-            public string Recommendation { get; set; } // raw
-            public string BngRecommendation { get; set; } // translated recommendation in Bengali
         }
 
         private VerdictResult BuildVerdict(ValidationResponse response, List<string> aiErrors, OllamaVerificationResult aiResponse, string bngRecommendation)
@@ -396,15 +412,15 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 ReasonsBangla = reasons,
                 SuggestedAction = verdict switch
                 {
-                    VerificationVerdict.HighRisk => HighRiskAction,
-                    VerificationVerdict.Caution => CautionAction,
-                    _ => VerifiedAction
+                    VerificationVerdict.HighRisk => CommonConstant.HighRiskAction,
+                    VerificationVerdict.Caution => CommonConstant.CautionAction,
+                    _ => CommonConstant.VerifiedAction
                 },
                 BngRecommendation = bngRecommendation,
                 Recommendation = aiResponse.Recommendation
             };
         }
-        
+
         private void ApplyAiGuardrail(OllamaVerificationResult ai, OCRResult ocrResult)
         {
             bool isDegenerate = ai.RiskScore == 0.0m && ai.ConfidenceInAssessment == 0.0m;
