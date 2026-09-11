@@ -1,8 +1,11 @@
 using ProbashiShield.Domain.Models;
 using ProbashiShield.Domain.Services.Admin.Contracts;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -12,6 +15,8 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
 {
     public class OCRService : IOCRService
     {
+        private const decimal ConfidenceThreshold = 90;
+
         public async Task<OCRResponse> ExtractTextAsync(List<byte[]> images)
         {
             var tessDataPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
@@ -22,17 +27,19 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 EngineMode.Default);
 
             var extractedText = new StringBuilder();
+
             decimal totalConfidence = 0;
             int pageCount = 0;
 
             foreach (var imageBytes in images)
             {
-                using var img = Pix.LoadFromMemory(imageBytes);
-                using var page = engine.Process(img);
+                var bestResult = ProcessBestOcr(
+                    engine,
+                    imageBytes);
 
-                extractedText.AppendLine(page.GetText());
+                extractedText.AppendLine(bestResult.Text);
 
-                totalConfidence += (decimal)page.GetMeanConfidence();
+                totalConfidence += bestResult.Confidence;
                 pageCount++;
             }
 
@@ -42,10 +49,93 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
 
             response.OCRConfidence =
                 pageCount > 0
-                ? Math.Round(totalConfidence / pageCount * 100, 2)
+                ? Math.Round(totalConfidence / pageCount, 2)
                 : 0;
 
             return await Task.FromResult(response);
+        }
+
+        private OcrAttemptResult ProcessBestOcr(
+            TesseractEngine engine,
+            byte[] imageBytes)
+        {
+            var originalResult = RunOcr(
+                engine,
+                imageBytes);
+
+            if (originalResult.Confidence >= ConfidenceThreshold)
+                return originalResult;
+
+            var grayResult = RunOcr(
+                engine,
+                ConvertToGrayScale(imageBytes));
+
+            if (grayResult.Confidence >= ConfidenceThreshold)
+                return grayResult;
+
+            var binaryResult = RunOcr(
+                engine,
+                ConvertToBinary(imageBytes));
+
+            return new[]
+            {
+            originalResult,
+            grayResult,
+            binaryResult
+        }
+            .OrderByDescending(x => x.Confidence)
+            .First();
+        }
+
+        private OcrAttemptResult RunOcr(
+            TesseractEngine engine,
+            byte[] imageBytes)
+        {
+            using var img = Pix.LoadFromMemory(imageBytes);
+
+            using var page = engine.Process(
+                img,
+                PageSegMode.SingleBlock);
+
+            return new OcrAttemptResult
+            {
+                Text = page.GetText(),
+                Confidence = (decimal)page.GetMeanConfidence() * 100
+            };
+        }
+
+        private byte[] ConvertToGrayScale(byte[] imageBytes)
+        {
+            using var image = SixLabors.ImageSharp.Image.Load(imageBytes);
+
+            image.Mutate(x =>
+            {
+                x.Grayscale();
+                x.Contrast(1.5f);
+            });
+
+            using var ms = new MemoryStream();
+
+            image.SaveAsPng(ms);
+
+            return ms.ToArray();
+        }
+
+        private byte[] ConvertToBinary(byte[] imageBytes)
+        {
+            using var image = SixLabors.ImageSharp.Image.Load(imageBytes);
+
+            image.Mutate(x =>
+            {
+                x.Grayscale();
+                x.BinaryThreshold(0.5f);
+            });
+
+            using var ms = new MemoryStream();
+
+            image.SaveAsPng(ms);
+
+            return ms.ToArray();
         }
 
         public OCRResponse GetParseData(string text)
@@ -55,22 +145,26 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 AgencyName = ExtractAgencyName(text),
                 LicenseNumber = ExtractLicense(text),
                 DestinationCountry = ExtractCountry(text),
-                JobTitle = ExtractJobTitle(text),
+
                 Salary = ExtractSalary(text),
                 SalaryCurrency = ExtractSalaryCurrency(text),
+
                 RecruitmentFee = ExtractRecruitmentFee(text),
                 RecruitmentFeeCurrency = ExtractRecruitmentFeeCurrency(text),
+
+                JobTitle = ExtractJobTitle(text),
+
                 FullExtractedText = text
             };
         }
 
         private string? ExtractAgencyName(string text)
         {
-            var patterns = new[]
+            string[] patterns =
             {
-        @"Agency Name\s*:\s*(.+)",
-        @"Agency\s*:\s*(.+)"
-    };
+            @"Agency Name\s*:\s*([^\r\n]+)",
+            @"Agency\s*:\s*([^\r\n]+)"
+        };
 
             foreach (var pattern in patterns)
             {
@@ -80,7 +174,9 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     RegexOptions.IgnoreCase);
 
                 if (match.Success)
+                {
                     return match.Groups[1].Value.Trim();
+                }
             }
 
             return null;
@@ -90,21 +186,31 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
         {
             var match = Regex.Match(
                 text,
-                @"(?:License No|BMET License No)\s*:\s*([A-Z0-9\-]+)",
+                @"(?:License No|BMET License No)\s*:\s*([A-Z0-9]+)",
                 RegexOptions.IgnoreCase);
 
-            return match.Success
-                ? match.Groups[1].Value.Trim()
-                : null;
+            if (!match.Success)
+                return null;
+
+            return NormalizeLicense(
+                match.Groups[1].Value.Trim());
+        }
+
+        private string NormalizeLicense(string value)
+        {
+            return value
+                .Replace("I", "1")
+                .Replace("O", "0")
+                .Replace("S", "5");
         }
 
         private string? ExtractCountry(string text)
         {
-            var patterns = new[]
+            string[] patterns =
             {
-        @"Destination Country\s*:\s*(.+)",
-        @"Country\s*:\s*(.+)"
-    };
+            @"Destination Country\s*:\s*([^\r\n]+)",
+            @"Country\s*:\s*([^\r\n]+)"
+        };
 
             foreach (var pattern in patterns)
             {
@@ -114,7 +220,9 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     RegexOptions.IgnoreCase);
 
                 if (match.Success)
+                {
                     return match.Groups[1].Value.Trim();
+                }
             }
 
             return null;
@@ -122,39 +230,57 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
 
         private string? ExtractJobTitle(string text)
         {
-            var match = Regex.Match(
-                text,
-                @"Job\s*Title\s*[:\-]?\s*([^\r\n]+)",
-                RegexOptions.IgnoreCase);
+            string[] patterns =
+            {
+            @"Job\s*Title\s*[:\-]?\s*([^\r\n]+)",
+            @"Job\s*Tile\s*[:\-]?\s*([^\r\n]+)",
+            @"Position\s*[:\-]?\s*([^\r\n]+)"
+        };
 
-            return match.Success
-                ? match.Groups[1].Value.Trim()
-                : null;
+            foreach (var pattern in patterns)
+            {
+                var match = Regex.Match(
+                    text,
+                    pattern,
+                    RegexOptions.IgnoreCase);
+
+                if (match.Success)
+                {
+                    return match.Groups[1].Value.Trim();
+                }
+            }
+
+            return null;
         }
 
         private decimal? ExtractSalary(string text)
         {
             var match = Regex.Match(
                 text,
-                @"(?:Monthly Salary|Basic Salary|Salary).*?(\d[\d,]*)",
+                @"(?:Basic Salary|Monthly Salary|Salary).*?(\d[\d,\.]*)",
                 RegexOptions.IgnoreCase);
 
             if (!match.Success)
                 return null;
 
-            var value = match.Groups[1]
-                .Value
-                .Replace(",", "");
+            var value = match.Groups[1].Value;
 
-            return decimal.TryParse(value, out var salary)
+            value = value
+                .Replace(",", "")
+                .Replace(".", "");
+
+            return decimal.TryParse(
+                value,
+                out var salary)
                 ? salary
                 : null;
         }
+
         private string? ExtractSalaryCurrency(string text)
         {
             var match = Regex.Match(
                 text,
-                @"(?:Monthly Salary|Basic Salary|Salary)\s*:\s*([A-Z]{3})",
+                @"(?:Basic Salary|Monthly Salary|Salary)\s*:\s*([A-Z]{3})",
                 RegexOptions.IgnoreCase);
 
             return match.Success
@@ -172,14 +298,16 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
             if (!match.Success)
                 return null;
 
-            var value = match.Groups[1]
-                .Value
+            var value = match.Groups[1].Value
                 .Replace(",", "");
 
-            return decimal.TryParse(value, out var fee)
+            return decimal.TryParse(
+                value,
+                out var fee)
                 ? fee
                 : null;
         }
+
         private string? ExtractRecruitmentFeeCurrency(string text)
         {
             var match = Regex.Match(
