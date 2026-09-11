@@ -53,7 +53,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         OriginalFileName = doc.FileName,
                         FilePath = doc.FileData,
                         FileSize = doc.FileSize,
-                        UploadedAt = DateTime.UtcNow
+                        UploadedAt = DateTime.Now
                     };
                     await _unitOfWork.DocumentRepository.AddAsync(document);
                 }
@@ -99,7 +99,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     RiskLevel = aiResponse.RiskScore.ToString(),
                     PromptText = aiResponse.prompt,
                     AIResponse = JsonConvert.SerializeObject(aiResponse),
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
                 };
 
                 await _unitOfWork.AIAnalysisLogRepository.AddAsync(aIAnalysisLog);
@@ -110,7 +110,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 {
                     ResultId = requestId,
                     Verdict = JsonConvert.SerializeObject(verdictResult),
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.Now
                 };
 
                 await _unitOfWork.VerificationResultRepository.AddAsync(verificationResult);
@@ -247,11 +247,13 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         {
                             errors.Add("Recruitment Fee is higher than Country Recruitment Fee limit.");
                             response.IsRecruitementFeeHigherThenCountryFeeLimit = true;
+                            response.IsRecruitementFeeLowerThenCountryFeeLimit = false;
                         }
                         if (oCRResult.RecruitmentFee < countryFeeLimit.MaximumAllowedFee)
                         {
                             errors.Add("Recruitment Fee is lower than Country Recruitment Fee limit.");
                             response.IsRecruitementFeeLowerThenCountryFeeLimit = true;
+                            response.IsRecruitementFeeHigherThenCountryFeeLimit = false;
                         }
                     }
                 }
@@ -297,11 +299,13 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                             {
                                 errors.Add("Salary is higher than Maximum salary range.");
                                 response.IsSalaryHigherThenSalaryReferenceFeeLimit = true;
+                                response.IsSalaryLowerThenSalaryReferenceFeeLimit = false;
                             }
                             if (oCRResult.Salary < salaryReference.MinSalary)
                             {
                                 errors.Add("Salary is lower than Minimum salary range.");
                                 response.IsSalaryLowerThenSalaryReferenceFeeLimit = true;
+                                response.IsSalaryHigherThenSalaryReferenceFeeLimit = false;
                             }
                         }
                     }

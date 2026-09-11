@@ -30,7 +30,7 @@ namespace ProbashiShield.Web.Controllers
             var webCount = totalCount - mobileCount;
 
             var last7Days = Enumerable.Range(0, 7)
-                .Select(i => DateTime.UtcNow.Date.AddDays(-6 + i))
+                .Select(i => DateTime.Now.Date.AddDays(-6 + i))
                 .Select(day => new
                 {
                     label = day.ToString("MMM dd"),

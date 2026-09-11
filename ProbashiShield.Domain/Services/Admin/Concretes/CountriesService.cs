@@ -42,7 +42,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     entity.CountryCode = vm.CountryCode;
                     entity.CountryName = vm.CountryName;
                     entity.IsActive = vm.IsActive;
-                    entity.UpdatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.Now;
                     _unitOfWork.CountryRepository.Update(entity);
                 }
                 else
@@ -52,7 +52,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         CountryCode = vm.CountryCode,
                         CountryName = vm.CountryName,
                         IsActive = vm.IsActive,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
                 }
                 await _unitOfWork.SaveAsync();
@@ -113,7 +113,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     entity.CategoryName = vm.CategoryName;
                     entity.Description = vm.Description;
                     entity.IsActive = vm.IsActive;
-                    entity.UpdatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.Now;
                     _unitOfWork.JobCategoryRepository.Update(entity);
                 }
                 else
@@ -123,7 +123,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         CategoryName = vm.CategoryName,
                         Description = vm.Description,
                         IsActive = vm.IsActive,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
                 }
                 await _unitOfWork.SaveAsync();
@@ -192,7 +192,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     entity.MaximumAllowedFee = vm.MaximumAllowedFee;
                     entity.EffectiveDate = vm.EffectiveDate;
                     entity.IsActive = vm.IsActive;
-                    entity.UpdatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.Now;
                     _unitOfWork.CountryFeeLimitRepository.Update(entity);
                 }
                 else
@@ -203,7 +203,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         MaximumAllowedFee = vm.MaximumAllowedFee,
                         EffectiveDate = vm.EffectiveDate,
                         IsActive = vm.IsActive,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
                 }
                 await _unitOfWork.SaveAsync();
@@ -279,7 +279,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                     entity.MaxSalary = vm.MaxSalary;
                     entity.Currency = vm.Currency;
                     entity.IsActive = vm.IsActive;
-                    entity.UpdatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.Now;
                     _unitOfWork.SalaryReferenceRepository.Update(entity);
                 }
                 else
@@ -292,7 +292,7 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                         MaxSalary = vm.MaxSalary,
                         Currency = vm.Currency,
                         IsActive = vm.IsActive,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     });
                 }
                 await _unitOfWork.SaveAsync();

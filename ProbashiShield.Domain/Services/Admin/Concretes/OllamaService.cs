@@ -168,8 +168,8 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
                 var confidence = root.TryGetProperty("confidence_in_assessment", out var conf) ? conf.GetDecimal() : 0.0m;
                 result.ConfidenceInAssessment = confidence;
                 var concerns = root.TryGetProperty("concerns", out var c) && c.ValueKind == JsonValueKind.Array
-                    ? string.Join("; ", c.EnumerateArray().Select(x => x.GetString()))
-                    : null;
+                ? string.Join("; ", c.EnumerateArray().Select(ExtractConcernText))
+                : null;
 
                 result.IsFraudDetected = fraudDetected;
                 result.RiskScore = riskScore;
@@ -214,6 +214,26 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
             {
                 return false;
             }
+        }
+
+        private static string ExtractConcernText(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.String)
+                return element.GetString();
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                // Try common field names the model might use instead of a plain string
+                foreach (var fieldName in new[] { "text", "issue", "concern", "description", "message" })
+                {
+                    if (element.TryGetProperty(fieldName, out var val) && val.ValueKind == JsonValueKind.String)
+                        return val.GetString();
+                }
+                // Fallback: dump the raw object as text so nothing is silently lost
+                return element.GetRawText();
+            }
+
+            return element.GetRawText();
         }
     }
 }

@@ -1,13 +1,12 @@
-﻿using FluentValidation;
-using ProbashiShield.Domain.Services.Admin.Contracts;
-using ProbashiShield.Domain.Services.Admin.Concretes;
-using Magicodes.ExporterAndImporter.Core;
+﻿using Magicodes.ExporterAndImporter.Core;
 using Magicodes.ExporterAndImporter.Excel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 using ProbashiShield.Domain.AutoMapperConfigs;
+using ProbashiShield.Domain.Services.Admin.Concretes;
+using ProbashiShield.Domain.Services.Admin.Contracts;
 using System;
 using System.Net.Http;
 
@@ -47,7 +46,7 @@ namespace ProbashiShield.Domain.ServiceExtensions
             })
             .AddPolicyHandler(GetRetryPolicy(configuration))
             .AddPolicyHandler(GetCircuitBreakerPolicy(configuration));
-            
+
             services.AddHttpClient<IGeminiService, GeminiService>(
             client =>
             {

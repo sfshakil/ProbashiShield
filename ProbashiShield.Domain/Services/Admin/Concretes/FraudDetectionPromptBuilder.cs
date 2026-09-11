@@ -38,7 +38,6 @@ namespace ProbashiShield.Domain.Services.Admin.Concretes
             YOUR TASK — only assess what the verified facts above CANNOT cover:
             1. Vague or generic job descriptions (e.g. no specific duties, no employer contact details)
             2. Pressuring, urgent, or unusual payment language in the document
-            3. Any inconsistency between the raw OCR text and the structured job details above (e.g. currency mismatch, salary figures that don't reconcile, mismatched names)
 
             Respond with the required JSON structure only.";
         }
