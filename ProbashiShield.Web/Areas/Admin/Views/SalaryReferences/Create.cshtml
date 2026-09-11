@@ -1,0 +1,17 @@
+@model ProbashiShield.Domain.ViewModels.Admin.SalaryReferenceViewModel
+<input type="hidden" id="Id" value="@(Model?.Id ?? 0)" />
+<div class="mb-3">
+    <label class="form-label">Country</label>
+    @Html.DropDownList("CountryId", (SelectList)ViewBag.Countries, "-- Select Country --", new { @class = "form-select", id = "CountryId" })
+</div>
+<div class="mb-3">
+    <label class="form-label">Job Category</label>
+    @Html.DropDownList("JobCategoryId", (SelectList)ViewBag.JobCategories, "-- Select Job Category --", new { @class = "form-select", id = "JobCategoryId" })
+</div>
+<div class="row">
+    <div class="col-md-6 mb-3"><label class="form-label">Min Salary</label><input type="number" step="0.01" id="MinSalary" class="form-control" value="@Model?.MinSalary" /></div>
+    <div class="col-md-6 mb-3"><label class="form-label">Max Salary</label><input type="number" step="0.01" id="MaxSalary" class="form-control" value="@Model?.MaxSalary" /></div>
+</div>
+<div class="mb-3"><label class="form-label">Currency</label><input type="text" id="Currency" class="form-control" value="@Model?.Currency" /></div>
+<div class="form-check mb-3"><input type="checkbox" id="IsActive" class="form-check-input" checked="@(Model?.IsActive ?? true)" /><label class="form-check-label">Active</label></div>
+<button type="button" class="btn btn-primary w-100" onclick="SaveItem()">Save</button>

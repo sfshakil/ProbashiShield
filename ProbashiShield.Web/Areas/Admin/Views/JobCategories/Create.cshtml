@@ -1,0 +1,6 @@
+@model ProbashiShield.Domain.ViewModels.Admin.JobCategoryViewModel
+<input type="hidden" id="Id" value="@(Model?.Id ?? 0)" />
+<div class="mb-3"><label class="form-label">Category Name</label><input type="text" id="CategoryName" class="form-control" value="@Model?.CategoryName" /></div>
+<div class="mb-3"><label class="form-label">Description</label><textarea id="Description" class="form-control">@Model?.Description</textarea></div>
+<div class="form-check mb-3"><input type="checkbox" id="IsActive" class="form-check-input" checked="@(Model?.IsActive ?? true)" /><label class="form-check-label">Active</label></div>
+<button type="button" class="btn btn-primary w-100" onclick="SaveJobCategory()">Save</button>

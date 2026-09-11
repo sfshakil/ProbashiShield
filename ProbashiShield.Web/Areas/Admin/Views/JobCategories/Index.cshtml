@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "JobCategories";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12"><h2>Job Categories</h2><hr /></div>
+    </div>
+    <div class="col-md-4 text-start pb-2"><button class="btn btn-primary" onclick="OpenCreateModal()"><i class="fas fa-plus"></i> Add Job Category</button></div>
+    <div class="row mb-3">
+        <div class="col-md-6"><input type="text" id="searchInput" class="form-control" placeholder="Search by Job Category..."></div>
+        <div class="col-md-6"><button class="btn btn-primary" id="btnSearch"><i class="fas fa-search"></i> Search</button></div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">Job Categories List</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="jobCategoriesTable" class="table table-striped table-bordered">
+                            <thead><tr><th>Category</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Job Category</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/bootstrap-datatables/js/datatables.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.buttons.min.js"></script>
+    <script>
+        var dataTable;
+        $(document).ready(function() {
+            InitializeDataTable();
+            $('#btnSearch').click(() => dataTable.ajax.reload());
+            $('#searchInput').keypress(e => { if (e.which == 13) { dataTable.ajax.reload(); return false; } });
+        });
+
+        function InitializeDataTable() {
+            dataTable = $('#jobCategoriesTable').DataTable({
+                "processing": true, "serverSide": true, "filter": false,
+                "ajax": {
+                    "url": "@Url.Action("GetAllJobCategories", "JobCategories", new { area = "Admin" })",
+                    "type": "POST", "datatype": "json",
+                    "data": d => { d.iDisplayStart = d.start; d.iDisplayLength = d.length; d.sSearch = $('#searchInput').val(); }
+                },
+                "columnDefs": [{
+                    "targets": 3, "render": (data, type, row) =>
+                        `<button class="btn btn-sm btn-info" onclick="EditItem(${row.id})"><i class="fas fa-edit"></i></button>
+                                 <button class="btn btn-sm btn-danger" onclick="DeleteItem(${row.id})"><i class="fas fa-trash"></i></button>`
+                }],
+                "columns": [
+                    { "data": "categoryName" }, { "data": "description" },
+                    { "data": "isActive", "render": d => d ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>' },
+                    { "data": null }
+                ]
+            });
+        }
+
+        function OpenCreateModal() {
+            $.get("@Url.Action("Create", "JobCategories", new { area = "Admin" })", data => { $('#modalBody').html(data); $('#modal').modal('show'); });
+        }
+        function EditItem(id) {
+            $.get("@Url.Action("Edit", "JobCategories", new { area = "Admin" })?id=" + id, data => { $('#modalBody').html(data); $('#modal').modal('show'); });
+        }
+        function SaveJobCategory() {
+            var vm = {
+                id: $('#Id').val(),
+                categoryName: $('#CategoryName').val(),
+                description: $('#Description').val(),
+                isActive: $('#IsActive').is(':checked')
+            };
+            $.ajax({
+                url: "@Url.Action("SaveJobCategory", "JobCategories", new { area = "Admin" })", type: "POST",
+                data: JSON.stringify(vm), contentType: "application/json",
+                success: r => { if (r.success) { alert(r.message); $('#modal').modal('hide'); dataTable.ajax.reload(); } else alert('Error: ' + r.message); },
+                error: () => alert('Error saving')
+            });
+        }
+        function DeleteItem(id) {
+            if (!confirm('Delete this job category?')) return;
+            $.post("@Url.Action("DeleteJobCategory", "JobCategories", new { area = "Admin" })", { id: id }, r => {
+                if (r.success) { alert(r.message); dataTable.ajax.reload(); } else alert('Error: ' + r.message);
+            });
+        }
+    </script>
+}

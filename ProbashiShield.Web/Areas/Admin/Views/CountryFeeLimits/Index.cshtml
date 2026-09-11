@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "CountryFeeLimits";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12"><h2>Country Fee Limits</h2><hr /></div>
+    </div>
+    <div class="col-md-4 text-start pb-2"><button class="btn btn-primary" onclick="OpenCreateCountryFeeModal()"><i class="fas fa-plus"></i> Add Country Fee Limits</button></div>
+
+    <div class="row mb-3">
+        <div class="col-md-6"><input type="text" id="searchCountryFeeInput" class="form-control" placeholder="Search by Country Name..."></div>
+        <div class="col-md-6"><button class="btn btn-primary" id="btnCountryFeeSearch"><i class="fas fa-search"></i> Search</button></div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">Country Fee Limits List</h5></div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="countryFeeLimitsTable" class="table table-striped table-bordered">
+                            <thead><tr><th>Country</th><th>Max Fee</th><th>Effective Date</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Country Fee Limit</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/bootstrap-datatables/js/datatables.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/bootstrap-datatables/js/dataTables.buttons.min.js"></script>
+    <script>
+        var dataTable;
+        $(document).ready(function() {
+            InitializeDataTable();
+            $('#btnCountryFeeSearch').click(() => dataTable.ajax.reload());
+            $('#searchCountryFeeInput').keypress(e => { if (e.which == 13) { dataTable.ajax.reload(); return false; } });
+        });
+
+        function InitializeDataTable() {
+            dataTable = $('#countryFeeLimitsTable').DataTable({
+                "processing": true, "serverSide": true, "filter": false,
+                "ajax": {
+                    "url": "@Url.Action("GetAllCountryFeeLimits", "CountryFeeLimits", new { area = "Admin" })",
+                    "type": "POST", "datatype": "json",
+                    "data": d => { d.iDisplayStart = d.start; d.iDisplayLength = d.length; d.sSearch = $('#searchCountryFeeInput').val(); }
+                },
+                "columnDefs": [{
+                    "targets": 4, "render": (data, type, row) =>
+                        `<button class="btn btn-sm btn-info" onclick="EditCountryFeeItem(${row.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="DeleteCountryFeeItem(${row.id})"><i class="fas fa-trash"></i></button>`
+                }],
+                "columns": [
+                    { "data": "countryName" }, { "data": "maximumAllowedFee" },
+                    { "data": "effectiveDate", "render": d => d ? new Date(d).toLocaleDateString() : '' },
+                    { "data": "isActive", "render": d => d ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>' },
+                    { "data": null }
+                ]
+            });
+        }
+
+        function OpenCreateCountryFeeModal() {
+            $.get("@Url.Action("Create", "CountryFeeLimits", new { area = "Admin" })", data => { $('#modalBody').html(data); $('#modal').modal('show'); });
+        }
+        function EditCountryFeeItem(id) {
+            $.get("@Url.Action("Edit", "CountryFeeLimits", new { area = "Admin" })?id=" + id, data => { $('#modalBody').html(data); $('#modal').modal('show'); });
+        }
+        function SaveCountryFeeItem() {
+            var vm = {
+                id: $('#Id').val(), countryId: $('#CountryId').val(),
+                maximumAllowedFee: $('#MaximumAllowedFee').val(), effectiveDate: $('#EffectiveDate').val(),
+                isActive: $('#IsActive').is(':checked')
+            };
+            $.ajax({
+                url: "@Url.Action("SaveCountryFeeLimit", "CountryFeeLimits", new { area = "Admin" })", type: "POST",
+                data: JSON.stringify(vm), contentType: "application/json",
+                success: r => { if (r.success) { alert(r.message); $('#modal').modal('hide'); dataTable.ajax.reload(); } else alert('Error: ' + r.message); }
+            });
+        }
+        function DeleteCountryFeeItem(id) {
+            if (!confirm('Delete this country fee limit?')) return;
+            $.post("@Url.Action("DeleteCountryFeeLimit", "CountryFeeLimits", new { area = "Admin" })", { id: id }, r => {
+                if (r.success) { alert(r.message); dataTable.ajax.reload(); } else alert('Error: ' + r.message);
+            });
+        }
+    </script>
+}

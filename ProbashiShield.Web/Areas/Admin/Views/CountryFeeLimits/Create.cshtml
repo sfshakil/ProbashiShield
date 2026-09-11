@@ -1,0 +1,10 @@
+@model ProbashiShield.Domain.ViewModels.Admin.CountryFeeLimitViewModel
+<input type="hidden" id="Id" value="@(Model?.Id ?? 0)" />
+<div class="mb-3">
+    <label class="form-label">Country</label>
+    @Html.DropDownList("CountryId", (SelectList)ViewBag.Countries, "-- Select Country --", new { @class = "form-select", id = "CountryId" })
+</div>
+<div class="mb-3"><label class="form-label">Maximum Allowed Fee</label><input type="number" step="0.01" id="MaximumAllowedFee" class="form-control" value="@Model?.MaximumAllowedFee" /></div>
+<div class="mb-3"><label class="form-label">Effective Date</label><input type="date" id="EffectiveDate" class="form-control" value="@(Model?.EffectiveDate.ToString("yyyy-MM-dd"))" required /></div>
+<div class="form-check mb-3"><input type="checkbox" id="IsActive" class="form-check-input" checked="@(Model?.IsActive ?? true)" /><label class="form-check-label">Active</label></div>
+<button type="button" class="btn btn-primary w-100" onclick="SaveCountryFeeItem()">Save</button>

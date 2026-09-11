@@ -3,11 +3,143 @@
     Layout = "~/Views/Shared/_DashboardLayout.cshtml";
 }
 
+<style>
+    .stat-card {
+        border-radius: 16px;
+        padding: 24px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+    .stat-total {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .stat-web {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .stat-mobile {
+        background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        color: #333;
+    }
+
+        .stat-mobile .stat-icon {
+            background: rgba(0,0,0,0.1);
+        }
+
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+        .chart-card h5 {
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+</style>
+
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1>Welcome to Dashboard</h1>
-            <p>Select a menu item from the left sidebar to get started.</p>
+    <h2 class="mb-4">Dashboard</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card stat-total">
+                <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">All Verification Requests</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-web">
+                <div class="stat-icon"><i class="fas fa-desktop"></i></div>
+                <div class="stat-value" id="statWeb">0</div>
+                <div class="stat-label">From Web</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card stat-mobile">
+                <div class="stat-icon"><i class="fas fa-mobile-alt"></i></div>
+                <div class="stat-value" id="statMobile">0</div>
+                <div class="stat-label">From Mobile App</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-line text-primary me-2"></i>Last 7 Days Trend</h5>
+                <canvas id="trendChart" height="100"></canvas>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-pie text-primary me-2"></i>Web vs Mobile</h5>
+                <canvas id="splitChart" height="220"></canvas>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        fetch('@Url.Action("GetDashboardStats", "Dashboard")')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('statTotal').textContent = data.totalCount;
+                document.getElementById('statWeb').textContent = data.webCount;
+                document.getElementById('statMobile').textContent = data.mobileCount;
+
+                new Chart(document.getElementById('trendChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.trend.map(t => t.label),
+                        datasets: [
+                            { label: 'Web', data: data.trend.map(t => t.web), borderColor: '#11998e', backgroundColor: 'rgba(17,153,142,0.1)', tension: 0.35, fill: true },
+                            { label: 'Mobile', data: data.trend.map(t => t.mobile), borderColor: '#f7971e', backgroundColor: 'rgba(247,151,30,0.1)', tension: 0.35, fill: true }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    }
+                });
+
+                new Chart(document.getElementById('splitChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Web', 'Mobile'],
+                        datasets: [{ data: [data.webCount, data.mobileCount], backgroundColor: ['#11998e', '#f7971e'] }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            });
+    </script>
+}

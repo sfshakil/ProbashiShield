@@ -22,6 +22,10 @@ namespace ProbashiShield.Domain.ServiceExtensions
             services.AddScoped<IDocumentsService, DocumentsService>();
             services.AddScoped<IOCRService, OCRService>();
             services.AddScoped<ICurrencyService, CurrencyService>();
+            services.AddScoped<ICountriesService, CountriesService>();
+            services.AddScoped<IJobCategoriesService, JobCategoriesService>();
+            services.AddScoped<ICountryFeeLimitsService, CountryFeeLimitsService>();
+            services.AddScoped<ISalaryReferencesService, SalaryReferencesService>();
 
             services.AddTransient<IImporter, ExcelImporter>();
             services.AddTransient<IExportFileByTemplate, ExcelExporter>();
